@@ -18,3 +18,24 @@ export async function apiFetch<T>(
 
   return res.json();
 }
+
+export async function authFetch(
+  url: string,
+  options: RequestInit = {}
+) {
+  const token = localStorage.getItem("token");
+
+  if (!token) {
+    window.location.href = "/";
+    throw new Error("Not authenticated");
+  }
+
+  return fetch(url, {
+    ...options,
+    headers: {
+      ...(options.headers || {}),
+      Authorization: `Bearer ${token}`,
+    },
+  });
+}
+

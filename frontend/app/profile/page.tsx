@@ -1,5 +1,7 @@
 "use client";
 
+import AuthGuard from "../components/AuthGuard";
+
 import { useEffect, useState } from "react";
 
 type User = {
@@ -47,10 +49,12 @@ export default function ProfilePage() {
 
   if (error) {
     return (
+    <AuthGuard>
       <main className="p-8">
         <h1 className="text-xl font-bold">Profile</h1>
         <p className="text-red-500">{error}</p>
       </main>
+    </AuthGuard>
     );
   }
 
