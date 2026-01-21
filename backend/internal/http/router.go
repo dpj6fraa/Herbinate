@@ -16,6 +16,7 @@ func NewRouter() http.Handler {
 	}
 
 	userRepo := &repository.UserRepository{DB: dbConn}
+	userHandler := &UserHandler{Users: userRepo}
 	auth := &AuthHandler{Users: userRepo}
 
 	mux.HandleFunc("/auth/register", auth.Register)
@@ -23,6 +24,8 @@ func NewRouter() http.Handler {
 	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("ok"))
 	})
+
+	mux.Handle("/me", AuthMiddleware(http.HandlerFunc(userHandler.Me)))
 
 	return withCORS(mux)
 }

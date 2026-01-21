@@ -9,6 +9,8 @@ import (
 
 	"myapp/internal/domain"
 	"myapp/internal/repository"
+
+	"myapp/internal/auth"
 )
 
 type AuthHandler struct {
@@ -64,5 +66,13 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Write([]byte("login success"))
+	token, err := auth.GenerateToken(user.ID)
+	if err != nil {
+		http.Error(w, "token error", http.StatusInternalServerError)
+		return
+	}
+
+	json.NewEncoder(w).Encode(map[string]string{
+		"token": token,
+	})
 }

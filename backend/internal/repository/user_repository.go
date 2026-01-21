@@ -38,3 +38,21 @@ func (r *UserRepository) FindByEmail(email string) (*domain.User, error) {
 
 	return &u, nil
 }
+
+func (r *UserRepository) FindByID(id string) (*domain.User, error) {
+	row := r.DB.QueryRow(
+		`SELECT id, email, created_at FROM users WHERE id = $1`,
+		id,
+	)
+
+	var u domain.User
+	err := row.Scan(&u.ID, &u.Email, &u.CreatedAt)
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	return &u, nil
+}
