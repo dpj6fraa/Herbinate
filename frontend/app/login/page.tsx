@@ -44,12 +44,20 @@ export default function LoginPage() {
               <label className="flex gap-2 items-center text-black">
                 <input
                   type="checkbox"
-                  className="appearance-none w-4 h-4 bg-gray-300 rounded checked:bg-[#71CE61]
+                  className="
+                    appearance-none w-4 h-4 rounded
+                    bg-gray-300 border border-gray-400
+                    checked:bg-[#71CE61]
+                    relative
                     checked:after:content-['✓']
                     checked:after:absolute
+                    checked:after:inset-0
+                    checked:after:flex
+                    checked:after:items-center
+                    checked:after:justify-center
                     checked:after:text-white
-                    checked:after:text-xs
-                    relative"
+                    checked:after:text-[10px]
+                  "
                 />
                 จดจำฉันไว้
               </label>
@@ -92,7 +100,7 @@ export default function LoginPage() {
 
       {/* Footer (Scroll to see) */}
       <footer className="bg-gray-800 text-gray-300 text-sm text-center py-4">
-        © 2026 Brand Name
+        © 2026 Herbinate
       </footer>
     </div>
   );
