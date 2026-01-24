@@ -27,13 +27,13 @@ async function register() {
     return;
   }
 
-  if (!accepted) {
-    setError("กรุณายอมรับเงื่อนไขการใช้งาน");
+  if (password !== confirmPassword) {
+    setError("รหัสผ่านไม่ตรงกัน");
     return;
   }
 
-  if (password !== confirmPassword) {
-    setError("รหัสผ่านไม่ตรงกัน");
+  if (!accepted) {
+    setError("กรุณายอมรับเงื่อนไขการใช้งาน");
     return;
   }
 
