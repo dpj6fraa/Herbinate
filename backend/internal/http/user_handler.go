@@ -27,6 +27,7 @@ func (h *UserHandler) Me(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"id":         user.ID,
 		"email":      user.Email,
+		"username":   user.Username,
 		"created_at": user.CreatedAt,
 	})
 }
