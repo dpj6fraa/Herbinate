@@ -2,7 +2,7 @@
 
 export default function Nav() {
     return (
-        <nav className="flex flex-col text-[24px] sm:pt-8 pb-6 px-6 fixed top-0 w-full z-50">
+        <nav className="flex flex-col text-[24px] sm:pt-8 pb-6 px-6 fixed top-0 w-full z-50 bg-white">
             <div className="flex justify-between items-center">
                 <h1 className="font-black">Herbinate</h1>
                 <div>
