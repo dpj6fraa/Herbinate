@@ -2,7 +2,7 @@
 
 export default function Nav() {
     return (
-        <nav className="flex flex-col text-[24px] sm:pt-8 pb-6 px-6 fixed top-0 w-full z-50 bg-white">
+        <nav className="flex flex-col text-[24px] sm:pt-8 px-6 fixed top-0 w-full z-50 bg-white">
             <div className="flex justify-between items-center">
                 <h1 className="font-black">Herbinate</h1>
                 <div>
@@ -79,7 +79,7 @@ export default function Nav() {
                     <svg width="24" height="24" viewBox="0 0 400 450" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <g transform="scale(1.2) translate(-35, -20)">
 
-                            <path d="M200 180V300M150 380L200 300L250 380H150Z" stroke="black" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" fill="black" />
+                            <path d="M200 180V300M150 380L200 300L250 380H150Z" stroke="black" strokeWidth="12" strokeLinecap="round" strokeLinejoin="round" fill="black" />
                             <rect x="70" y="240" width="260" height="12" rx="6" fill="black" />
 
                             <path d="M70 310C70 345 100 370 135 370C170 370 200 345 200 310H70Z" fill="black" transform="translate(0, -50)" />
@@ -92,7 +92,7 @@ export default function Nav() {
                             <path d="M200 310C200 345 230 370 265 370C300 370 330 345 330 310H200Z" fill="black" transform="translate(0, -50)" />
 
                             <circle cx="265" cy="150" r="70" fill="black" />
-                            <path d="M265 140V70M265 140L230 85M265 140L300 85" stroke="white" stroke-width="10" stroke-linecap="round" transform="translate(0, 40)" />
+                            <path d="M265 140V70M265 140L230 85M265 140L300 85" stroke="white" strokeWidth="10" strokeLinecap="round" transform="translate(0, 40)" />
 
                         </g>
                     </svg>
