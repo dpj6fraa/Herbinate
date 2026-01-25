@@ -13,7 +13,7 @@ export default function SearchBar() {
                     className="object-cover brightness-50"
                 />
 
-                <div className="text-center w-full h-full flex flex-col justify-center items-center bg-[rgba(255,255,255,0.3)] z-50">
+                <div className="text-center w-full h-full flex flex-col justify-center items-center bg-[rgba(255,255,255,0.3)] z-40">
                     <h1 className="text-[32px] font-bold mb-2">"สมุนไพร... เรื่องง่ายสำหรับทุกคน"</h1>
                     <h2 className="text-[18px] text-[rgba(255,255,255,0.6)]">แหล่งความรู้และผลิตภัณฑ์สมุนไพร</h2>
                     <h2 className="text-[18px] mb-4 text-[rgba(255,255,255,0.6)]">ที่ช่วยให้คุณเลือกใช้ได้อย่างมั่นใจ</h2>
@@ -22,7 +22,7 @@ export default function SearchBar() {
                         <input
                             type="text"
                             placeholder="ค้นหาสมุนไพร..."
-                            className="w-full py-0.5 px-6 rounded-full text-black bg-white/90 focus:outline-none shadow-lg"
+                            className="w-full py-0.5 px-6 rounded-full text-black bg-white/90 focus:outline-none shadow-lg "
                         />
                         <span className="absolute right-5 top-1/2 -translate-y-1/2 text-gray-400">
                             <svg
