@@ -5,7 +5,7 @@ import Image from "next/image";
 export default function SearchBar() {
     return (
         <div>
-            <div className="relative w-full flex flex-col items-center justify-center text-white overflow-hidden sm:h-75 md:h-100 lg:h-150">
+            <div className="relative w-full flex flex-col items-center justify-center text-white overflow-hidden sm:h-75 md:h-60">
                 <Image
                     src="/images/herbs.webp"
                     alt="Herbinate Background"
@@ -22,7 +22,7 @@ export default function SearchBar() {
                         <input
                             type="text"
                             placeholder="ค้นหาสมุนไพร..."
-                            className="w-full py-3 px-6 rounded-full text-black bg-white/90 focus:outline-none shadow-lg"
+                            className="w-full py-0.5 px-6 rounded-full text-black bg-white/90 focus:outline-none shadow-lg"
                         />
                         <span className="absolute right-5 top-1/2 -translate-y-1/2 text-gray-400">
                             <svg

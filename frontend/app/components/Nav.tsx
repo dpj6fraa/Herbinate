@@ -4,7 +4,7 @@ import Link from "next/link";
 
 export default function Nav() {
     return (
-        <nav className="flex flex-col text-[24px] sm:pt-8 px-6 fixed top-0 w-full z-50 bg-white  border-b-4 border-b-[#97DB8B]">
+        <nav className="flex flex-col text-[24px] sm:pt-8 px-6 fixed top-0 w-full z-50 bg-white border-b-4 border-b-[#97DB8B] md:pt-4 ">
             <div className="flex justify-between items-center">
                 <h1 className="font-black text-black">Herbinate</h1>
                 <div>
@@ -12,9 +12,9 @@ export default function Nav() {
                 </div>
             </div>
 
-            <div className="flex justify-around">
+            <div className="flex justify-around md:justify-center gap-10 pb-2">
 
-                <div className="flex flex-col items-center mt-6 cursor-pointer">
+                <div className="flex flex-col items-center mt-2 cursor-pointer">
                     <Link href="" className="flex flex-col items-center cursor-pointer">
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
@@ -23,7 +23,7 @@ export default function Nav() {
                     </Link>
                 </div>
 
-                <div className="flex flex-col items-center mt-6 cursor-pointer">
+                <div className="flex flex-col items-center mt-2 cursor-pointer">
                     <Link href="" className="flex flex-col items-center cursor-pointer">
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
@@ -35,7 +35,7 @@ export default function Nav() {
                     </Link>
                 </div>
 
-                <div className="flex flex-col items-center mt-6 cursor-pointer">
+                <div className="flex flex-col items-center mt-2 cursor-pointer">
                     <Link href="" className="flex flex-col items-center cursor-pointer">
 
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -55,7 +55,7 @@ export default function Nav() {
                     </Link>
                 </div>
 
-                <div className="flex flex-col items-center mt-6 cursor-pointer">
+                <div className="flex flex-col items-center mt-2 cursor-pointer">
                     <Link href="" className="flex flex-col items-center cursor-pointer">
                         <svg
                             width="24"
@@ -86,7 +86,7 @@ export default function Nav() {
                 </div>
 
 
-                <div className="flex flex-col items-center mt-6 cursor-pointer">
+                <div className="flex flex-col items-center mt-2 cursor-pointer">
                     <Link href="" className="flex flex-col items-center cursor-pointer">
                         <svg width="24" height="24" viewBox="0 0 400 450" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <g transform="scale(1.2) translate(-35, -20)">

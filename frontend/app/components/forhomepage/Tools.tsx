@@ -2,105 +2,109 @@
 
 export default function tools() {
     return (
-        <div className="px-4 pt-4 bg-white">
-            <h1 className="text-[16px] font-bold md:ml-6 text-black">เครื่องมือ</h1>
-            <div className="grid grid-cols-2 grid-rows-2 place-items-center p-4 mx-4 md:place-items-center">
+        <div className="px-4 pt-4 bg-white md:w-full flex flex-col justify-center items-center">
+            <div className="md:w-135 text-start ">
+                <h1 className="text-[16px] font-bold sm:text-black  md:text-start">เครื่องมือ</h1>
+            </div>
+            <div className="grid place-items-center">
 
-                <div className="flex flex-col justify-center border border-[#687069] p-4 rounded-2xl bg-[#ECFFEE] sm:w-60 mb-6 md:w-150 lg:w-120">
+                <div className="grid grid-cols-2 grid-rows-2 place-items-center p-4 mx-4 md:w-fit">
+                    <div className="flex flex-col justify-center border border-[#687069] p-4 rounded-2xl bg-[#ECFFEE] sm:w-60 mb-6 md:w-60 h-15 mx-2">
 
-                    <div className="flex justify-center">
-                        <svg
-                            width="24"
-                            height="24"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            xmlns="http://www.w3.org/2000/svg"
-                        >
-                            <path d="M2 7V3C2 2.44772 2.44772 2 3 2H7" stroke="black" strokeWidth={2} strokeLinecap="round" />
-                            <path d="M17 2H21C21.5523 2 22 2.44772 22 3V7" stroke="black" strokeWidth={2} strokeLinecap="round" />
-                            <path d="M2 17V21C2 21.5523 2.44772 22 3 22H7" stroke="black" strokeWidth={2} strokeLinecap="round" />
-                            <path d="M17 22H21C21.5523 22 22 21.5523 22 21V17" stroke="black" strokeWidth={2} strokeLinecap="round" />
-                            <path
-                                d="M11.8 19C11.8 19 5.5 17.5 5 13C4.5 9.5 9 9 11.8 14"
-                                fill="black"
-                            />
-                            <path
-                                d="M12.2 19C12.2 19 18.5 17.5 19 13C19.5 9.5 15 9 12.2 14"
-                                fill="black"
-                            />
-                            <path
-                                d="M12 16C14 14 15 11 12 5C9 11 10 14 12 16Z"
-                                fill="black"
-                            />
-                        </svg>
-                        <h2 className="text-[16px] ml-2 text-black font-medium">AI Image Scanner</h2>
+                        <div className="flex justify-start mt-4">
+                            <svg
+                                width="24"
+                                height="24"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                xmlns="http://www.w3.org/2000/svg"
+                            >
+                                <path d="M2 7V3C2 2.44772 2.44772 2 3 2H7" stroke="black" strokeWidth={2} strokeLinecap="round" />
+                                <path d="M17 2H21C21.5523 2 22 2.44772 22 3V7" stroke="black" strokeWidth={2} strokeLinecap="round" />
+                                <path d="M2 17V21C2 21.5523 2.44772 22 3 22H7" stroke="black" strokeWidth={2} strokeLinecap="round" />
+                                <path d="M17 22H21C21.5523 22 22 21.5523 22 21V17" stroke="black" strokeWidth={2} strokeLinecap="round" />
+                                <path
+                                    d="M11.8 19C11.8 19 5.5 17.5 5 13C4.5 9.5 9 9 11.8 14"
+                                    fill="black"
+                                />
+                                <path
+                                    d="M12.2 19C12.2 19 18.5 17.5 19 13C19.5 9.5 15 9 12.2 14"
+                                    fill="black"
+                                />
+                                <path
+                                    d="M12 16C14 14 15 11 12 5C9 11 10 14 12 16Z"
+                                    fill="black"
+                                />
+                            </svg>
+                            <h2 className="text-[16px] ml-2 text-black font-medium">AI Image Scanner</h2>
+                        </div>
+                        <label className="text-[10px] text-center text-black font-medium mb-4">ถ่ายรูปเพื่อระบุชื่อและข้อมูลสมุนไพรไทย</label>
                     </div>
-                    <label className="text-[10px] text-center text-black font-medium">ถ่ายรูปเพื่อระบุชื่อและข้อมูลสมุนไพรไทย</label>
-                </div>
 
-                <div className="flex flex-col justify-center border border-[#687069] p-4 rounded-2xl bg-[#ECFFEE] sm:w-60 mb-6 md:w-150 lg:w-120">
+                    <div className="flex flex-col justify-center border border-[#687069] p-4 rounded-2xl bg-[#ECFFEE] sm:w-60 mb-6 md:w-60 h-15 mx-2">
 
-                    <div className="flex justify-center">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M19 3H16.82C16.4 1.84 15.3 1 14 1H10C8.7 1 7.6 1.84 7.18 3H5C3.9 3 3 3.9 3 5V21C3 22.1 3.9 23 5 23H19C20.1 23 21 22.1 21 21V5C21 3.9 20.1 3 19 3Z" fill="black" />
+                        <div className="flex justify-start mt-4">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M19 3H16.82C16.4 1.84 15.3 1 14 1H10C8.7 1 7.6 1.84 7.18 3H5C3.9 3 3 3.9 3 5V21C3 22.1 3.9 23 5 23H19C20.1 23 21 22.1 21 21V5C21 3.9 20.1 3 19 3Z" fill="black" />
 
-                        <path d="M14 3H10V5H14V3Z" fill="white" />
+                                <path d="M14 3H10V5H14V3Z" fill="white" />
 
-                        <path d="M9 8H7V10H5V12H7V14H9V12H11V10H9V8Z" fill="white" />
+                                <path d="M9 8H7V10H5V12H7V14H9V12H11V10H9V8Z" fill="white" />
 
-                        <path d="M5.5 18L8 20.5L12 15.5L10.5 14L8 17.5L6.5 16L5.5 18Z" fill="white" />
+                                <path d="M5.5 18L8 20.5L12 15.5L10.5 14L8 17.5L6.5 16L5.5 18Z" fill="white" />
 
-                        <rect x="14" y="9" width="4" height="2" rx="0.5" fill="white" />
-                        <rect x="14" y="13" width="4" height="2" rx="0.5" fill="white" />
-                        <rect x="14" y="17" width="4" height="2" rx="0.5" fill="white" />
-                    </svg>
-                        <h2 className="text-[16px] ml-2 text-black font-medium">AI Symptoms Checker</h2>
+                                <rect x="14" y="9" width="4" height="2" rx="0.5" fill="white" />
+                                <rect x="14" y="13" width="4" height="2" rx="0.5" fill="white" />
+                                <rect x="14" y="17" width="4" height="2" rx="0.5" fill="white" />
+                            </svg>
+                            <h2 className="text-[16px] ml-2 text-black font-medium">AI Symptoms Checker</h2>
+                        </div>
+                        <label className="text-[10px] text-center text-black font-medium mb-4">บอกอาการ AI แนะนำสมุนไพรที่เหมาะสม</label>
                     </div>
-                    <label className="text-[10px] text-center text-black font-medium">บอกอาการ AI แนะนำสมุนไพรที่เหมาะสม</label>
-                </div>
 
-                <div className="flex flex-col justify-center border border-[#687069] p-4 rounded-2xl bg-[#ECFFEE] sm:w-60 mb-6 md:w-150 lg:w-120">
+                    <div className="flex flex-col justify-center border border-[#687069] p-4 rounded-2xl bg-[#ECFFEE] sm:w-60 mb-6 md:w-60 h-15 mx-2">
 
-                    <div className="flex justify-center">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                        <circle cx="9" cy="7" r="4"></circle>
-                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                    </svg>
-                        <h2 className="text-[16px] ml-2 text-black font-medium">Community</h2>
+                        <div className="flex justify-start mt-4">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="9" cy="7" r="4"></circle>
+                                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                            </svg>
+                            <h2 className="text-[16px] ml-2 text-black font-medium">Community</h2>
+                        </div>
+                        <label className="text-[10px] text-center text-black font-medium mb-4">เข้าร่วมชุมชนผู้ใช้สมุนไพรไทย</label>
                     </div>
-                    <label className="text-[10px] text-center text-black font-medium">เข้าร่วมชุมชนผู้ใช้สมุนไพรไทย</label>
-                </div>
 
-                <div className="flex flex-col justify-center border border-[#687069] p-4 rounded-2xl bg-[#ECFFEE] sm:w-60 mb-6 md:w-150 lg:w-120">
+                    <div className="flex flex-col justify-center border border-[#687069] p-4 rounded-2xl bg-[#ECFFEE] sm:w-60 mb-6 md:w-60 h-15 mx-2">
 
-                    <div className="flex justify-center ">
-                        <svg width="24" height="24" viewBox="0 0 400 450" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <g transform="scale(1.2) translate(-35, -20)">
+                        <div className="flex justify-start mt-4">
+                            <svg width="24" height="24" viewBox="0 0 400 450" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <g transform="scale(1.2) translate(-35, -20)">
 
-                            <path d="M200 180V300M150 380L200 300L250 380H150Z" stroke="black" strokeWidth="12" strokeLinecap="round" strokeLinejoin="round" fill="black" />
-                            <rect x="70" y="240" width="260" height="12" rx="6" fill="black" />
+                                    <path d="M200 180V300M150 380L200 300L250 380H150Z" stroke="black" strokeWidth="12" strokeLinecap="round" strokeLinejoin="round" fill="black" />
+                                    <rect x="70" y="240" width="260" height="12" rx="6" fill="black" />
 
-                            <path d="M70 310C70 345 100 370 135 370C170 370 200 345 200 310H70Z" fill="black" transform="translate(0, -50)" />
+                                    <path d="M70 310C70 345 100 370 135 370C170 370 200 345 200 310H70Z" fill="black" transform="translate(0, -50)" />
 
-                            <circle cx="135" cy="150" r="70" fill="black" />
-                            <path d="M135 60C135 60 115 80 115 100C115 120 135 130 135 130C135 130 155 120 155 100C155 80 135 60 135 60Z" fill="white" transform="translate(0, 40)" />
-                            <path d="M105 105C105 105 90 115 90 130C90 145 105 150 115 150C125 150 135 135 135 135C130 120 105 105 105 105Z" fill="white" transform="translate(0, 40)" />
-                            <path d="M165 105C165 105 180 115 180 130C180 145 165 150 155 150C145 150 135 135 135 135C140 120 165 105 165 105Z" fill="white" transform="translate(0, 40)" />
+                                    <circle cx="135" cy="150" r="70" fill="black" />
+                                    <path d="M135 60C135 60 115 80 115 100C115 120 135 130 135 130C135 130 155 120 155 100C155 80 135 60 135 60Z" fill="white" transform="translate(0, 40)" />
+                                    <path d="M105 105C105 105 90 115 90 130C90 145 105 150 115 150C125 150 135 135 135 135C130 120 105 105 105 105Z" fill="white" transform="translate(0, 40)" />
+                                    <path d="M165 105C165 105 180 115 180 130C180 145 165 150 155 150C145 150 135 135 135 135C140 120 165 105 165 105Z" fill="white" transform="translate(0, 40)" />
 
-                            <path d="M200 310C200 345 230 370 265 370C300 370 330 345 330 310H200Z" fill="black" transform="translate(0, -50)" />
+                                    <path d="M200 310C200 345 230 370 265 370C300 370 330 345 330 310H200Z" fill="black" transform="translate(0, -50)" />
 
-                            <circle cx="265" cy="150" r="70" fill="black" />
-                            <path d="M265 140V70M265 140L230 85M265 140L300 85" stroke="white" strokeWidth="10" strokeLinecap="round" transform="translate(0, 40)" />
+                                    <circle cx="265" cy="150" r="70" fill="black" />
+                                    <path d="M265 140V70M265 140L230 85M265 140L300 85" stroke="white" strokeWidth="10" strokeLinecap="round" transform="translate(0, 40)" />
 
-                        </g>
-                    </svg>
-                        <h2 className="text-[16px] ml-2 text-black font-medium">Compare</h2>
+                                </g>
+                            </svg>
+                            <h2 className="text-[16px] ml-2 text-black font-medium">Compare</h2>
+                        </div>
+                        <label className="text-[10px] text-center text-black font-medium mb-4">เปรียบเทียบสรรพคุณสมุนไพรแต่ละชนิด</label>
                     </div>
-                    <label className="text-[10px] text-center text-black font-medium">เปรียบเทียบสรรพคุณสมุนไพรแต่ละชนิด</label>
-                </div>
 
+                </div>
             </div>
 
         </div>
