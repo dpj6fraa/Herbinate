@@ -1,0 +1,51 @@
+"use client";
+
+import { Menu } from "lucide-react";
+
+interface HerbsItem {
+  id: number;
+  name: string;
+  description: string;
+  src: string;
+}
+
+export default function HerbsNews({ data }: { data: HerbsItem[] }) {
+  return (
+    <>
+      <div className="bg-white mt-2 sticky top-14.25] z-10">
+        <div className="px-4 py-3 flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-gray-800 text-[16px]">
+            ข่าวความเคลื่อนไหวสมุนไพร
+          </h2>
+          <button className="p-2">
+            <Menu className="w-6 h-6" />
+          </button>
+        </div>
+      </div>
+
+      <div className="bg-white pb-6">
+        <div className="overflow-x-auto scrollbar-hide">
+          <div className="flex gap-3 px-4 py-3 bg-[#F7FFF7]" style={{ width: "max-content" }}>
+            {data?.map((item) => (
+              <div key={item.id} className="shrink-0 w-44 bg-[##F7FFF7]">
+                <div className="bg-white rounded-lg overflow-hidden">
+                  <img
+                    src={item.src}
+                    alt={item.name}
+                    className="w-44 h-32 object-cover"
+                  />
+                  <div className="pt-2">
+                    <p className="text-xs text-gray-600 mt-1 line-clamp-2 mb-4">
+                      {item.description}
+                    </p>
+                    <p className="text-xs text-center text-gray-600">อ่านรายละเอียด</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
