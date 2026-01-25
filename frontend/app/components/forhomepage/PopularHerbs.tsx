@@ -12,7 +12,7 @@ interface HerbsItem {
 export default function PopularHerbs({ data }: { data: HerbsItem[] }) {
   return (
     <>
-      <div className="bg-white mt-2 sticky top-14.25] z-10">
+      <div className="bg-white sticky top-14.25 z-10">
         <div className="px-4 py-3 flex items-center justify-between">
           <h2 className="text-lg font-semibold text-gray-800 text-[16px]">
             สมุนไพรยอดนิยม

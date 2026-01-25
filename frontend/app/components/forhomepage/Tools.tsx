@@ -2,7 +2,7 @@
 
 export default function tools() {
     return (
-        <div className="m-4">
+        <div className="mx-4 mt-4">
             <h1 className="text-[16px] font-bold md:ml-6">เครื่องมือ</h1>
             <div className="grid grid-cols-2 grid-rows-2 place-items-center p-4 mx-4 md:place-items-center">
 
