@@ -9,7 +9,7 @@ import NewsList from "../constants/NewsList";
 
 export default function Home() {
     return (
-        <main className="min-h-screen flex flex-col pt-35 lg:pt-full">
+        <main className="min-h-screen flex flex-col pt-35 lg:pt-full bg-white">
             <Nav />
 
             <section className="flex-1">

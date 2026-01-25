@@ -10,15 +10,15 @@ export default function SearchBar() {
                     src="/images/herbs.webp"
                     alt="Herbinate Background"
                     fill
-                    className="object-cover -z-10 brightness-50"
+                    className="object-cover brightness-50"
                 />
 
-                <div className="text-center w-full h-full flex flex-col justify-center items-center bg-[rgba(255,255,255,0.3)]">
+                <div className="text-center w-full h-full flex flex-col justify-center items-center bg-[rgba(255,255,255,0.3)] z-50">
                     <h1 className="text-[32px] font-bold mb-2">"สมุนไพร... เรื่องง่ายสำหรับทุกคน"</h1>
                     <h2 className="text-[18px] text-[rgba(255,255,255,0.6)]">แหล่งความรู้และผลิตภัณฑ์สมุนไพร</h2>
                     <h2 className="text-[18px] mb-4 text-[rgba(255,255,255,0.6)]">ที่ช่วยให้คุณเลือกใช้ได้อย่างมั่นใจ</h2>
 
-                    <div className="relative max-w-md mx-25">
+                    <div className="relative max-w-md mx-25 lg:w-full">
                         <input
                             type="text"
                             placeholder="ค้นหาสมุนไพร..."
