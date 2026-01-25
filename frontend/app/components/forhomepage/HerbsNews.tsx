@@ -28,7 +28,7 @@ export default function HerbsNews({ data }: { data: HerbsItem[] }) {
           <div className="flex gap-3 px-4 py-3 bg-[#F7FFF7]" style={{ width: "max-content" }}>
             {data?.map((item) => (
               <div key={item.id} className="shrink-0 w-44 bg-[##F7FFF7]">
-                <div className="bg-white rounded-lg overflow-hidden">
+                <div className="bg-[##F7FFF7] bg-red rounded-lg overflow-hidden">
                   <img
                     src={item.src}
                     alt={item.name}
