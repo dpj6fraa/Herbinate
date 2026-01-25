@@ -17,54 +17,34 @@ export default function RegisterPage() {
 async function register() {
   setError("");
 
-  if (!username.trim()) {
-    setError("กรุณากรอกชื่อผู้ใช้");
-    return;
-  }
-
-  if (!email.trim()) {
-    setError("กรุณากรอกอีเมล์");
-    return;
-  }
-
-  if (password !== confirmPassword) {
-    setError("รหัสผ่านไม่ตรงกัน");
-    return;
-  }
-
-  if (!accepted) {
-    setError("กรุณายอมรับเงื่อนไขการใช้งาน");
-    return;
-  }
-
-  const payload = {
-    email: email.trim(),
-    password,
-    username: username.trim(),
-  };
-
-  console.log("Sending payload:", payload); // Debug
+  if (!username.trim()) return setError("กรุณากรอกชื่อผู้ใช้");
+  if (!email.trim()) return setError("กรุณากรอกอีเมล์");
+  if (password !== confirmPassword) return setError("รหัสผ่านไม่ตรงกัน");
+  if (!accepted) return setError("กรุณายอมรับเงื่อนไขการใช้งาน");
 
   try {
     const res = await fetch("http://localhost:8080/auth/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
+      body: JSON.stringify({
+        email: email.trim(),
+        password,
+        username: username.trim(),
+      }),
     });
 
-    console.log("Response status:", res.status); // Debug
-
     if (!res.ok) {
-      const errorText = await res.text();
-      console.log("Error response:", errorText); // Debug
-      setError(errorText || "เกิดข้อผิดพลาด");
+      const msg = await res.text();
+      setError(msg || "สมัครไม่สำเร็จ");
       return;
     }
 
-    router.push("/login");
-  } catch (err) {
-    console.error("Fetch error:", err);
-    setError("ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้");
+    const data = await res.json(); // { email }
+    router.push(`/verify-email?email=${encodeURIComponent(data.email)}`)
+
+
+  } catch {
+    setError("ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้");
   }
 }
 

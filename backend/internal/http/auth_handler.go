@@ -11,10 +11,14 @@ import (
 	"myapp/internal/auth"
 	"myapp/internal/domain"
 	"myapp/internal/repository"
+	"myapp/internal/service"
 )
 
 type AuthHandler struct {
 	Users *repository.UserRepository
+	OTPs  *repository.OTPRepository
+	OTP   *service.OTPService
+	Email *service.EmailService
 }
 
 type authRequest struct {
@@ -24,59 +28,107 @@ type authRequest struct {
 }
 
 func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
-	// Log request details
-	log.Printf("Register request: Method=%s, ContentType=%s", r.Method, r.Header.Get("Content-Type"))
-
 	var req authRequest
+
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		log.Printf("Decode error: %v", err)
-		http.Error(w, "invalid body: "+err.Error(), http.StatusBadRequest)
+		http.Error(w, "invalid body", http.StatusBadRequest)
 		return
 	}
 
-	// Log received data (ไม่แสดง password จริงๆ)
-	log.Printf("Received: email=%s, username=%s, password_length=%d", req.Email, req.Username, len(req.Password))
-
-	// Validation
 	if req.Email == "" || req.Password == "" || req.Username == "" {
-		log.Printf("Validation failed: empty fields")
 		http.Error(w, "กรุณากรอกข้อมูลให้ครบถ้วน", http.StatusBadRequest)
 		return
 	}
 
-	hash, err := bcrypt.GenerateFromPassword([]byte(req.Password), 10)
-	if err != nil {
-		log.Printf("Bcrypt error: %v", err)
-		http.Error(w, "encryption error", http.StatusInternalServerError)
-		return
-	}
+	hash, _ := bcrypt.GenerateFromPassword([]byte(req.Password), 10)
 
 	user := &domain.User{
 		ID:           uuid.NewString(),
 		Email:        req.Email,
 		Username:     req.Username,
 		PasswordHash: string(hash),
+		IsVerified:   false,
 	}
 
 	if err := h.Users.Create(user); err != nil {
-		log.Printf("Database error: %v", err)
 		http.Error(w, "email already exists", http.StatusBadRequest)
 		return
 	}
 
-	log.Printf("User created successfully: %s", req.Email)
+	// Generate + save OTP
+	otp := h.OTP.Generate()
+
+	h.OTPs.Create(&domain.EmailOTP{
+		Email: user.Email,
+		Code:  otp,
+	})
+
+	if err := h.Email.SendOTP(user.Email, otp); err != nil {
+		http.Error(w, "failed to send email", http.StatusInternalServerError)
+		return
+	}
+
+	// TODO: ส่ง email จริง
+	log.Printf("OTP for %s = %s", user.Email, otp)
+
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(map[string]string{
-		"message": "success",
+		"email": user.Email,
 	})
 }
 
-func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
-	var req authRequest
+func (h *AuthHandler) VerifyEmail(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		Email string `json:"email"`
+		OTP   string `json:"otp"`
+	}
+
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "invalid body", http.StatusBadRequest)
 		return
 	}
+
+	ok := h.OTP.Verify(req.Email, req.OTP, h.OTPs)
+	if !ok {
+		http.Error(w, "invalid or expired otp", http.StatusUnauthorized)
+		return
+	}
+
+	h.Users.MarkVerifiedByEmail(req.Email)
+	h.OTPs.DeleteByEmail(req.Email)
+
+	w.WriteHeader(http.StatusOK)
+}
+
+func (h *AuthHandler) ResendOTP(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		Email string `json:"email"`
+	}
+
+	json.NewDecoder(r.Body).Decode(&req)
+
+	user, err := h.Users.FindByEmail(req.Email)
+	if err != nil || user == nil {
+		http.Error(w, "user not found", http.StatusNotFound)
+		return
+	}
+
+	if user.IsVerified {
+		http.Error(w, "already verified", http.StatusBadRequest)
+		return
+	}
+
+	otp := h.OTP.Generate()
+	h.OTPs.Replace(user.Email, otp)
+	h.Email.SendOTP(user.Email, otp)
+
+	log.Printf("Resend OTP for %s = %s", req.Email, otp)
+	w.WriteHeader(http.StatusOK)
+}
+
+func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
+	var req authRequest
+	json.NewDecoder(r.Body).Decode(&req)
 
 	user, err := h.Users.FindByEmail(req.Email)
 	if err != nil || user == nil {
@@ -84,19 +136,17 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if bcrypt.CompareHashAndPassword(
-		[]byte(user.PasswordHash),
-		[]byte(req.Password),
-	) != nil {
+	if !user.IsVerified {
+		http.Error(w, "email not verified", http.StatusForbidden)
+		return
+	}
+
+	if bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(req.Password)) != nil {
 		http.Error(w, "invalid credentials", http.StatusUnauthorized)
 		return
 	}
 
-	token, err := auth.GenerateToken(user.ID)
-	if err != nil {
-		http.Error(w, "token error", http.StatusInternalServerError)
-		return
-	}
+	token, _ := auth.GenerateToken(user.ID)
 
 	json.NewEncoder(w).Encode(map[string]string{
 		"token": token,

@@ -5,6 +5,7 @@ import (
 
 	"myapp/internal/db"
 	"myapp/internal/repository"
+	"myapp/internal/service"
 )
 
 func NewRouter() http.Handler {
@@ -15,12 +16,17 @@ func NewRouter() http.Handler {
 		panic(err)
 	}
 
+	otpRepo := &repository.OTPRepository{DB: dbConn}
+	otpService := service.NewOTPService()
 	userRepo := &repository.UserRepository{DB: dbConn}
 	userHandler := &UserHandler{Users: userRepo}
-	auth := &AuthHandler{Users: userRepo}
+	emailService := service.NewEmailService() //
+	auth := &AuthHandler{Users: userRepo, OTPs: otpRepo, OTP: otpService, Email: emailService}
 
 	mux.HandleFunc("/auth/register", auth.Register)
 	mux.HandleFunc("/auth/login", auth.Login)
+	mux.HandleFunc("/auth/verify-email", auth.VerifyEmail)
+	mux.HandleFunc("/auth/resend-otp", auth.ResendOTP)
 	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("ok"))
 	})
