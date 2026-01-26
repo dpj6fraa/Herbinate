@@ -1,5 +1,5 @@
 "use client";
-
+import Link from "next/link";
 import { Menu } from "lucide-react";
 
 export default function Tools() {
@@ -19,7 +19,7 @@ export default function Tools() {
             <div className="bg-white py-4">
                 <div className="max-w-150 mx-auto px-4">
                     <div className="grid grid-cols-2 gap-2.5">
-                        <div className="flex flex-col justify-center border border-gray-300 p-3 rounded-xl bg-green-50/50 hover:bg-green-50 transition-colors duration-200">
+                        <Link href="/aisearch/image" className="flex flex-col justify-center border border-gray-300 p-3 rounded-xl bg-green-50/50 hover:bg-green-50 transition-colors duration-200">
                             <div className="flex justify-start items-center gap-2">
                                 <svg
                                     width="18"
@@ -39,9 +39,9 @@ export default function Tools() {
                                 <h3 className="text-xs text-gray-800 font-medium">AI Scanner</h3>
                             </div>
                             <p className="text-[10px] text-gray-600 mt-1.5">ถ่ายรูประบุสมุนไพร</p>
-                        </div>
+                        </Link>
 
-                        <div className="flex flex-col justify-center border border-gray-300 p-3 rounded-xl bg-green-50/50 hover:bg-green-50 transition-colors duration-200">
+                        <Link href="/aisearch/text" className="flex flex-col justify-center border border-gray-300 p-3 rounded-xl bg-green-50/50 hover:bg-green-50 transition-colors duration-200">
                             <div className="flex justify-start items-center gap-2">
                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                     <path d="M19 3H16.82C16.4 1.84 15.3 1 14 1H10C8.7 1 7.6 1.84 7.18 3H5C3.9 3 3 3.9 3 5V21C3 22.1 3.9 23 5 23H19C20.1 23 21 22.1 21 21V5C21 3.9 20.1 3 19 3Z" fill="black" />
@@ -55,8 +55,7 @@ export default function Tools() {
                                 <h3 className="text-xs text-gray-800 font-medium">AI Checker</h3>
                             </div>
                             <p className="text-[10px] text-gray-600 mt-1.5">แนะนำสมุนไพรตามอาการ</p>
-                        </div>
-
+                        </Link>
                         <div className="flex flex-col justify-center border border-gray-300 p-3 rounded-xl bg-green-50/50 hover:bg-green-50 transition-colors duration-200">
                             <div className="flex justify-start items-center gap-2">
                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -69,7 +68,6 @@ export default function Tools() {
                             </div>
                             <p className="text-[10px] text-gray-600 mt-1.5">ชุมชนผู้ใช้สมุนไพร</p>
                         </div>
-
                         <div className="flex flex-col justify-center border border-gray-300 p-3 rounded-xl bg-green-50/50 hover:bg-green-50 transition-colors duration-200">
                             <div className="flex justify-start items-center gap-2">
                                 <svg width="18" height="18" viewBox="0 0 400 450" fill="none" xmlns="http://www.w3.org/2000/svg">
