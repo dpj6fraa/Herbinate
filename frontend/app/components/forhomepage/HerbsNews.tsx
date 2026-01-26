@@ -14,43 +14,43 @@ export default function HerbsNews({ data }: { data: HerbsItem[] }) {
 
   return (
     <div className="w-full bg-white sm:px-6 mt-2">
-      <div className="sticky top-0 z-20 bg-white border-b border-gray-100">
-        <div className="max-w-150 mx-auto px-4 pb-3 flex items-center justify-between">
-          <h2 className="text-[16px] font-semibold text-gray-800">
+      <div className="bg-white border-b border-gray-200/50">
+        <div className="max-w-150 mx-auto px-4 py-4 flex items-center justify-between">
+          <h2 className="text-base font-medium text-gray-700">
             ข่าวความเคลื่อนไหวสมุนไพร
           </h2>
-          <button className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-            <Menu className="w-6 h-6 text-black" />
+          <button className="p-2 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+            <Menu className="w-5 h-5 text-gray-600" />
           </button>
         </div>
       </div>
 
-      <div className="bg-[#F7FFF7]">
-        <div className="max-w-200 mx-auto">
-          <div className="overflow-x-auto scrollbar-hide snap-x snap-mandatory">
-            <div className="flex px-4 pb-6" style={{ width: "max-content" }}>
+      <div className="bg-gradient-to-b from-green-50/30 to-white py-6">
+        <div className="max-w-150 mx-auto">
+          <div className="overflow-x-auto scrollbar-hide snap-x snap-mandatory px-4">
+            <div className="flex gap-4" style={{ width: "max-content" }}>
               {limitedNews?.map((item) => (
                 <div
                   key={item.id}
-                  className="shrink-0 w-40 snap-start"
+                  className="shrink-0 w-44 snap-start group"
                 >
-                  <div className="flex flex-col items-center text-center">
-                    <div className="w-38 h-36 rounded-t-lg overflow-hidden shadow-md bg-white">
+                  <div className="flex flex-col bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300">
+                    <div className="w-full h-32 rounded-t-xl overflow-hidden bg-gray-100">
                       <img
                         src={item.src}
                         alt={item.name}
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       />
                     </div>
 
-                    <div className="pt-3 w-full text-left px-2">
-                      <p className="text-[12px] text-gray-700 line-clamp-2 leading-snug h-9 pl-2">
+                    <div className="p-3 flex flex-col gap-2">
+                      <p className="text-xs text-gray-600 line-clamp-2 leading-relaxed min-h-[2.5rem]">
                         {item.description}
                       </p>
 
-                      <p className="text-[11px] text-black text-center font-medium mt-2 cursor-pointer hover:underline pl-2">
-                        อ่านรายละเอียด
-                      </p>
+                      <button className="text-xs text-green-600 font-normal hover:text-green-700 transition-colors text-left">
+                        อ่านรายละเอียด →
+                      </button>
                     </div>
                   </div>
                 </div>

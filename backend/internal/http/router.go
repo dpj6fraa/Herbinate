@@ -27,6 +27,15 @@ func NewRouter() http.Handler {
 	mux.HandleFunc("/auth/login", auth.Login)
 	mux.HandleFunc("/auth/verify-email", auth.VerifyEmail)
 	mux.HandleFunc("/auth/resend-otp", auth.ResendOTP)
+	fs := http.FileServer(http.Dir("./uploads"))
+	mux.Handle("/uploads/", http.StripPrefix("/uploads/", fs))
+
+	mux.Handle("/users/username",
+		AuthMiddleware(http.HandlerFunc(userHandler.UpdateUsername)))
+
+	mux.Handle("/users/profile-image",
+		AuthMiddleware(http.HandlerFunc(userHandler.UploadProfileImage)))
+
 	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("ok"))
 	})

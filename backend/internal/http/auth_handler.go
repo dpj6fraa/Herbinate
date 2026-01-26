@@ -29,6 +29,7 @@ type authRequest struct {
 
 func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	var req authRequest
+	const DefaultProfileImage = "/uploads/profiles/default_profile_picture.png"
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "invalid body", http.StatusBadRequest)
@@ -43,11 +44,12 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	hash, _ := bcrypt.GenerateFromPassword([]byte(req.Password), 10)
 
 	user := &domain.User{
-		ID:           uuid.NewString(),
-		Email:        req.Email,
-		Username:     req.Username,
-		PasswordHash: string(hash),
-		IsVerified:   false,
+		ID:              uuid.NewString(),
+		Email:           req.Email,
+		Username:        req.Username,
+		PasswordHash:    string(hash),
+		IsVerified:      false,
+		ProfileImageURL: DefaultProfileImage,
 	}
 
 	if err := h.Users.Create(user); err != nil {

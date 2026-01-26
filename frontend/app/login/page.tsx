@@ -28,8 +28,8 @@ export default function LoginPage() {
     const data = await res.json();
     localStorage.setItem("token", data.token);
   
-    // ✅ Redirect ไปหน้า Main
-    window.location.href = "/main";
+    // ✅ Redirect ไปหน้า Homepage
+    window.location.href = "/homepage";
   }
   return (
     <div className="min-h-svh bg-white flex flex-col">
