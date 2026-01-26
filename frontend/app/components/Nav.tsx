@@ -19,8 +19,9 @@ export default function Nav() {
             <div className="flex justify-between items-center">
                 <h1 className="font-black">Herbinate</h1>
                 <div>
-                    {/* Profile Placeholder */}
-                    <div className="bg-gray-200 w-10 h-10 sm:w-11 sm:h-11 rounded-full"></div>
+                  <Link href="/profile">
+                    <div className="bg-gray-200 w-11 h-11 rounded-full cursor-pointer hover:ring-2 hover:ring-[#97DB8B] transition" />
+                  </Link>
                 </div>
             </div>
 
