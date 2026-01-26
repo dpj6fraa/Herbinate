@@ -11,7 +11,7 @@ export default function ComparePage() {
 
             <Nav />
 
-            <div className="flex-1 flex flex-col pt-4 md:pt-4">
+            <div className="flex-1 flex flex-col pt-4 lg:items-center">
 
                 <FindHerbs/>
 

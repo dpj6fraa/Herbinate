@@ -28,7 +28,7 @@ export default function FindHerbs() {
                     </svg></span>
             </div>
 
-            <div className="flex justify-start items-center w-full text-black">
+            <div className="flex justify-start items-center w-full text-black lg:gap-10">
                 <a className=" flex pr-4 cursor-pointer">
                     <div className="flex justify-center items-center border-2 border-gray-500 px-3 py-1 rounded-2xl">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
