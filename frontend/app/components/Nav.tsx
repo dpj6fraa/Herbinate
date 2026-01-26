@@ -4,7 +4,7 @@ import Link from "next/link";
 
 export default function Nav() {
     return (
-        <nav className="flex flex-col text-[24px] sm:pt-8 px-6 fixed top-0 w-full z-50 bg-white border-b-4 border-b-[#97DB8B] md:pt-4 ">
+        <nav className="sticky top-0 w-full bg-white border-b-4 border-b-[#97DB8B] flex flex-col text-[24px] sm:px-6 z-50">
             <div className="flex justify-between items-center">
                 <h1 className="font-black text-black">Herbinate</h1>
                 <div>
