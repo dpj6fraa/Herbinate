@@ -28,11 +28,10 @@ function PopularHerbs({ data }: { data: HerbsItem[] }) {
           <div className="overflow-x-auto scrollbar-hide snap-x snap-mandatory px-4">
             <div className="flex gap-3" style={{ width: "max-content" }}>
               {data?.map((item) => (
-                <div
-                  key={item.id}
-                  className="shrink-0 w-36 snap-start group"
-                >
+                <div key={item.id} className="shrink-0 w-36 snap-start group">
                   <div className="flex flex-col bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300">
+                    
+                    {/* image */}
                     <div className="w-full h-24 rounded-t-xl overflow-hidden bg-gray-100">
                       <img
                         src={item.src}
@@ -41,14 +40,22 @@ function PopularHerbs({ data }: { data: HerbsItem[] }) {
                       />
                     </div>
 
-                    <div className="p-2.5 flex flex-col gap-1">
-                      <h3 className="font-medium text-xs text-gray-800 line-clamp-1">
+                    {/* content (โครงเดียวกับ news) */}
+                    <div className="p-2.5 flex flex-col gap-1.5">
+                      {/* ใช้ name เป็นหัวเรื่องสั้น ๆ */}
+                      <h3 className="text-[11px] font-medium text-gray-800 line-clamp-1">
                         {item.name}
                       </h3>
+
                       <p className="text-[10px] text-gray-600 line-clamp-2 leading-relaxed">
                         {item.description}
                       </p>
+
+                      <button className="text-[10px] text-green-600 font-normal hover:text-green-700 transition-colors text-left">
+                        ดูสมุนไพรนี้ →
+                      </button>
                     </div>
+
                   </div>
                 </div>
               ))}
@@ -59,6 +66,7 @@ function PopularHerbs({ data }: { data: HerbsItem[] }) {
     </div>
   );
 }
+
 
 function HerbsNews({ data }: { data: HerbsItem[] }) {
   return (
