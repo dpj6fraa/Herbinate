@@ -2,18 +2,24 @@
 
 import Nav from "../components/Nav";
 import Footer from "../components/Footer";
+import FindHerbs from "../components/forcomparepage/FindHerbs";
+import AllHerbsList from "../constants/forcomparepage/AllHerbsList";
 
 export default function ComparePage() {
     return (
-        <main>
+        <main className="min-h-screen flex flex-col bg-white pt-4 md:w-full">
 
-            <Nav /> 
+            <Nav />
 
-            <div className="flex-1">
-        <h1>rerrw</h1>
+            <div className="flex-1 flex flex-col pt-4 md:pt-4">
+
+                <FindHerbs/>
+
+                <AllHerbsList />
+
             </div>
 
-            <Footer/>
+            <Footer />
 
         </main>
     )

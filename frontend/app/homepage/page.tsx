@@ -4,12 +4,12 @@ import Nav from "../components/Nav";
 import Footer from "../components/Footer";
 import SearchBar from "../components/forhomepage/SearchBar";
 import Tools from "../components/forhomepage/Tools";
-import HerbList from "../constants/HerbsList";
-import NewsList from "../constants/NewsList";
+import HerbList from "../constants/forhomepage/HerbsList";
+import NewsList from "../constants/forhomepage/NewsList";
 
 export default function Home() {
     return (
-        <main className="min-h-screen flex flex-col pt-20 md:pt-28 w-full lg:pt-full bg-white">
+        <main className="min-h-screen flex flex-col pt-6 md:w-full lg:pt-full bg-white">
             <Nav />
 
             <section className="flex-1">

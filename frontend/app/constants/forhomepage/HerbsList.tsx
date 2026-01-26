@@ -1,4 +1,4 @@
-import PopularHerbs from "../components/forhomepage/PopularHerbs";
+import PopularHerbs from "@/app/components/forhomepage/PopularHerbs"
 
 const Herb = [
     {id: 1, name: "ขมิ้นชัน", description: "บำรุงผิวพรรณ ลดการอักเสบ", src: "/images/kha-min-chan.jpg"},

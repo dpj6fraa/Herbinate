@@ -8,8 +8,8 @@ export default function tools() {
             </div>
             <div className="grid place-items-center">
 
-                <div className="grid grid-cols-2 grid-rows-2 place-items-center p-4 mx-4 md:w-fit">
-                    <div className="flex flex-col justify-center border border-[#687069] p-4 rounded-2xl bg-[#ECFFEE] sm:w-60 mb-6 md:w-60 h-15 mx-2">
+                <div className="grid grid-cols-2 grid-rows-2 place-items-center px-4 pt-4 mx-4 md:w-fit">
+                    <div className="flex flex-col justify-center border border-[#687069] p-4 rounded-2xl bg-[#ECFFEE] sm:w-60 mb-4 md:w-60 h-15 mx-2">
 
                         <div className="flex justify-start mt-4">
                             <svg
@@ -41,7 +41,7 @@ export default function tools() {
                         <label className="text-[10px] text-center text-black font-medium mb-4">ถ่ายรูปเพื่อระบุชื่อและข้อมูลสมุนไพรไทย</label>
                     </div>
 
-                    <div className="flex flex-col justify-center border border-[#687069] p-4 rounded-2xl bg-[#ECFFEE] sm:w-60 mb-6 md:w-60 h-15 mx-2">
+                    <div className="flex flex-col justify-center border border-[#687069] p-4 rounded-2xl bg-[#ECFFEE] sm:w-60 mb-4 md:w-60 h-15 mx-2">
 
                         <div className="flex justify-start mt-4">
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -62,7 +62,7 @@ export default function tools() {
                         <label className="text-[10px] text-center text-black font-medium mb-4">บอกอาการ AI แนะนำสมุนไพรที่เหมาะสม</label>
                     </div>
 
-                    <div className="flex flex-col justify-center border border-[#687069] p-4 rounded-2xl bg-[#ECFFEE] sm:w-60 mb-6 md:w-60 h-15 mx-2">
+                    <div className="flex flex-col justify-center border border-[#687069] p-4 rounded-2xl bg-[#ECFFEE] sm:w-60 mb-4 md:w-60 h-15 mx-2">
 
                         <div className="flex justify-start mt-4">
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -76,7 +76,7 @@ export default function tools() {
                         <label className="text-[10px] text-center text-black font-medium mb-4">เข้าร่วมชุมชนผู้ใช้สมุนไพรไทย</label>
                     </div>
 
-                    <div className="flex flex-col justify-center border border-[#687069] p-4 rounded-2xl bg-[#ECFFEE] sm:w-60 mb-6 md:w-60 h-15 mx-2">
+                    <div className="flex flex-col justify-center border border-[#687069] p-4 rounded-2xl bg-[#ECFFEE] sm:w-60 mb-4 md:w-60 h-15 mx-2">
 
                         <div className="flex justify-start mt-4">
                             <svg width="24" height="24" viewBox="0 0 400 450" fill="none" xmlns="http://www.w3.org/2000/svg">

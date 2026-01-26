@@ -1,4 +1,4 @@
-import HerbsNews from "../components/forhomepage/HerbsNews"; 
+import HerbsNews from "@/app/components/forhomepage/HerbsNews"
 
 const News = [
     {id: 1, name: "ขมิ้นชัน", description: "บำรุงผิวพรรณ ลดการอักเสบ", src: "/images/kha-min-chan.jpg"},
