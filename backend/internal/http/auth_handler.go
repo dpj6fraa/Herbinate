@@ -29,7 +29,7 @@ type authRequest struct {
 
 func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	var req authRequest
-	const DefaultProfileImage = "/default_profile_picture.png"
+	const DefaultProfileImage = "/uploads/profiles/default_profile_picture.png"
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "invalid body", http.StatusBadRequest)

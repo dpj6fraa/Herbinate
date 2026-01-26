@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Footer from "@/app/components/Footer";
 import Nav from "../components/Nav";
@@ -23,6 +23,11 @@ export default function ProfilePage() {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
 
+  const [profileImage, setProfileImage] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) {
@@ -42,6 +47,7 @@ export default function ProfilePage() {
       .then((data) => {
         setUsername(data.username);
         setEmail(data.email);
+        setProfileImage(data.profile_image_url);
       })
       .catch(() => {
         localStorage.removeItem("token");
@@ -54,6 +60,50 @@ export default function ProfilePage() {
     localStorage.removeItem("token");
     router.push("/login");
   }
+
+  async function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
+  const file = e.target.files?.[0];
+  if (!file) return;
+
+  const formData = new FormData();
+  formData.append("image", file);
+
+  const token = localStorage.getItem("token");
+
+  const res = await fetch("http://localhost:8080/users/profile-image", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+    body: formData,
+  });
+
+  const data = await res.json();
+  setProfileImage(data.profile_image_url);
+
+  window.dispatchEvent(new Event("profile-updated"));
+}
+async function saveUsername() {
+  if (!username.trim()) return;
+
+  setSaving(true);
+  const token = localStorage.getItem("token");
+
+  const res = await fetch("http://localhost:8080/users/username", {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ username }),
+  });
+
+  setSaving(false);
+
+  if (res.ok) {
+    window.dispatchEvent(new Event("profile-updated"));
+  }
+}
+
+
 
   if (loading) {
     return (
@@ -76,9 +126,32 @@ export default function ProfilePage() {
           {/* Profile Card */}
           <div className="bg-[#EEFFE5] rounded-xl p-4 mb-4">
             <div className="flex flex-col items-center text-center">
-              <div className="w-20 h-20 rounded-full bg-white flex items-center justify-center mb-2">
-                <Image src="/globe.svg" alt="profile" width={40} height={40} />
-              </div>
+
+<div
+  onClick={() => fileInputRef.current?.click()}
+  className="relative w-20 h-20 rounded-full cursor-pointer group"
+>
+  <img
+    src={
+      profileImage
+        ? `http://localhost:8080${profileImage}`
+        : "/default_profile_picture.png"
+    }
+    className="w-full h-full rounded-full object-cover"
+  />
+
+  {/* Green highlight */}
+  <div className="absolute inset-0 rounded-full ring-0 group-hover:ring-4 ring-[#71CE61] transition"></div>
+</div>
+
+<input
+  type="file"
+  accept="image/*"
+  ref={fileInputRef}
+  onChange={handleImageChange}
+  className="hidden"
+/>
+
 
               <div className="flex items-center gap-2">
                 {isEditing ? (
@@ -86,9 +159,15 @@ export default function ProfilePage() {
                     value={username}
                     autoFocus
                     onChange={(e) => setUsername(e.target.value)}
-                    onBlur={() => setIsEditing(false)}
+                    onBlur={() => {
+                      setIsEditing(false);
+                      saveUsername();
+                    }}
                     onKeyDown={(e) => {
-                      if (e.key === "Enter") setIsEditing(false);
+                      if (e.key === "Enter") {
+                        setIsEditing(false);
+                        saveUsername();
+                      }
                     }}
                     className="
                       text-sm text-black font-semibold

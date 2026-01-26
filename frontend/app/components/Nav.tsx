@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 type MeResponse = {
   id: string;
   username: string;
-  profileImageURL?: string;
+  profile_image_url?: string;
 };
 
 export default function Nav() {
@@ -28,9 +28,7 @@ useEffect(() => {
 
     try {
       const res = await fetch("http://localhost:8080/me", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       });
 
       if (!res.ok) throw new Error("unauthorized");
@@ -47,8 +45,16 @@ useEffect(() => {
 
   fetchMe();
 
+  // 👇 ฟัง event โปรไฟล์อัปเดต
+  const handleProfileUpdate = () => {
+    fetchMe();
+  };
+
+  window.addEventListener("profile-updated", handleProfileUpdate);
+
   return () => {
     mounted = false;
+    window.removeEventListener("profile-updated", handleProfileUpdate);
   };
 }, []);
 
@@ -63,7 +69,11 @@ useEffect(() => {
           user ? (
             <Link href="/profile">
               <img
-                src={user.profileImageURL || "/default_profile_picture.png"}
+                src={
+                  user.profile_image_url
+                    ? `http://localhost:8080${user.profile_image_url}?v=${Date.now()}`
+                    : "/default_profile_picture.png"
+                }
                 className="w-11 h-11 rounded-full object-cover cursor-pointer hover:ring-2 hover:ring-[#97DB8B] transition"
                 alt="profile"
               />

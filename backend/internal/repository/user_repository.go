@@ -96,3 +96,21 @@ func (r *UserRepository) MarkVerifiedByEmail(email string) error {
 	)
 	return err
 }
+
+func (r *UserRepository) UpdateProfileImage(userID, imageURL string) error {
+	_, err := r.DB.Exec(
+		`UPDATE users SET profile_image_url = $1 WHERE id = $2`,
+		imageURL,
+		userID,
+	)
+	return err
+}
+
+func (r *UserRepository) UpdateUsername(userID, username string) error {
+	_, err := r.DB.Exec(
+		`UPDATE users SET username = $1 WHERE id = $2`,
+		username,
+		userID,
+	)
+	return err
+}
