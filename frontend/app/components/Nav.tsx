@@ -1,29 +1,83 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
+
+type MeResponse = {
+  id: string;
+  username: string;
+  profileImageURL?: string;
+};
 
 export default function Nav() {
-    return (
-        <nav className="
-          flex flex-col
-          text-[24px]
-          text-black
-          pt-3 sm:pt-4 md:pt-6
-          px-4 sm:px-6
-          sticky top-0
-          w-full
-          z-50
-          bg-white
-          border-b-4 border-b-[#97DB8B]
-        ">
-            <div className="flex justify-between items-center">
-                <h1 className="font-black">Herbinate</h1>
-                <div>
-                  <Link href="/profile">
-                    <div className="bg-gray-200 w-11 h-11 rounded-full cursor-pointer hover:ring-2 hover:ring-[#97DB8B] transition" />
-                  </Link>
-                </div>
-            </div>
+  const [user, setUser] = useState<MeResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+
+useEffect(() => {
+  let mounted = true;
+
+  async function fetchMe() {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      if (mounted) {
+        setUser(null);
+        setLoading(false);
+      }
+      return;
+    }
+
+    try {
+      const res = await fetch("http://localhost:8080/me", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!res.ok) throw new Error("unauthorized");
+
+      const data = await res.json();
+      if (mounted) setUser(data);
+    } catch {
+      localStorage.removeItem("token");
+      if (mounted) setUser(null);
+    } finally {
+      if (mounted) setLoading(false);
+    }
+  }
+
+  fetchMe();
+
+  return () => {
+    mounted = false;
+  };
+}, []);
+
+
+  return (
+    <nav className="flex flex-col text-[24px] text-black pt-3 px-4 sticky top-0 w-full z-50 bg-white border-b-4 border-b-[#97DB8B]">
+      <div className="flex justify-between items-center">
+        <h1 className="font-black">Herbinate</h1>
+
+        {/* RIGHT SIDE */}
+        {!loading && (
+          user ? (
+            <Link href="/profile">
+              <img
+                src={user.profileImageURL || "/default_profile_picture.png"}
+                className="w-11 h-11 rounded-full object-cover cursor-pointer hover:ring-2 hover:ring-[#97DB8B] transition"
+                alt="profile"
+              />
+            </Link>
+          ) : (
+            <Link
+              href="/login"
+              className="text-sm font-semibold px-4 py-2 border rounded-full hover:bg-[#97DB8B] hover:text-white transition"
+            >
+              Login
+            </Link>
+          )
+        )}
+      </div>
 
             <div className="flex justify-center mb-1">
                 <div className="flex w-full max-w-md justify-between text-black">

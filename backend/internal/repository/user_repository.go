@@ -14,13 +14,14 @@ type UserRepository struct {
 
 func (r *UserRepository) Create(user *domain.User) error {
 	_, err := r.DB.Exec(
-		`INSERT INTO users (id, email, password_hash, username, isverify)
-		 VALUES ($1, $2, $3, $4, $5)`,
+		`INSERT INTO users (id, email, password_hash, username, isverify, profile_image_url)
+		 VALUES ($1, $2, $3, $4, $5, $6)`,
 		user.ID,
 		user.Email,
 		user.PasswordHash,
 		user.Username,
 		user.IsVerified,
+		user.ProfileImageURL,
 	)
 
 	if err != nil {
@@ -32,7 +33,7 @@ func (r *UserRepository) Create(user *domain.User) error {
 
 func (r *UserRepository) FindByEmail(email string) (*domain.User, error) {
 	row := r.DB.QueryRow(
-		`SELECT id, email, password_hash, username, isverify, created_at
+		`SELECT id, email, password_hash, username, isverify, created_at, profile_image_url
 		 FROM users
 		 WHERE email = $1`,
 		email,
@@ -46,6 +47,7 @@ func (r *UserRepository) FindByEmail(email string) (*domain.User, error) {
 		&u.Username,
 		&u.IsVerified,
 		&u.CreatedAt,
+		&u.ProfileImageURL,
 	)
 
 	if errors.Is(err, sql.ErrNoRows) {
@@ -60,7 +62,7 @@ func (r *UserRepository) FindByEmail(email string) (*domain.User, error) {
 
 func (r *UserRepository) FindByID(id string) (*domain.User, error) {
 	row := r.DB.QueryRow(
-		`SELECT id, email, password_hash, username, isverify, created_at
+		`SELECT id, email, password_hash, username, isverify, created_at, profile_image_url
 		 FROM users
 		 WHERE id = $1`,
 		id,
@@ -74,6 +76,7 @@ func (r *UserRepository) FindByID(id string) (*domain.User, error) {
 		&u.Username,
 		&u.IsVerified,
 		&u.CreatedAt,
+		&u.ProfileImageURL,
 	)
 
 	if errors.Is(err, sql.ErrNoRows) {
