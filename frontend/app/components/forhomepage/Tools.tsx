@@ -7,7 +7,7 @@ export default function Tools() {
         <div className="w-full bg-white sm:px-6">
             <div className="bg-white border-b border-gray-200/50">
                 <div className="max-w-150 mx-auto px-4 py-3 flex items-center justify-between">
-                    <h2 className="text-sm font-medium text-gray-700">
+                    <h2 className="text-sm font-bold text-gray-700">
                         เครื่องมือ
                     </h2>
                     <button className="p-1.5 hover:bg-gray-50 rounded-lg transition-colors duration-200">

@@ -23,7 +23,7 @@ function PopularHerbs({ data }: { data: HerbsItem[] }) {
         </div>
       </div>
 
-      <div className="bg-gradient-to-b from-green-50/30 to-white py-4">
+      <div className="bg-white py-4">
         <div className="max-w-150 mx-auto">
           <div className="overflow-x-auto scrollbar-hide snap-x snap-mandatory px-4">
             <div className="flex gap-3" style={{ width: "max-content" }}>
@@ -74,7 +74,7 @@ function HerbsNews({ data }: { data: HerbsItem[] }) {
         </div>
       </div>
 
-      <div className="bg-gradient-to-b from-green-50/30 to-white py-4">
+      <div className="bg-white py-4 pb-6">
         <div className="max-w-150 mx-auto">
           <div className="overflow-x-auto scrollbar-hide snap-x snap-mandatory px-4">
             <div className="flex gap-3" style={{ width: "max-content" }}>
