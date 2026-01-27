@@ -67,7 +67,7 @@ export default function CreatePostPage() {
         return;
       }
 
-      router.push("/community"); // หรือหน้า feed ของคุณ
+      router.push("/homepage"); // หรือหน้า feed ของคุณ
     } catch (err) {
       setError("เชื่อมต่อเซิร์ฟเวอร์ไม่ได้");
     } finally {

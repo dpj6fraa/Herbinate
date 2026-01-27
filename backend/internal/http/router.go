@@ -25,7 +25,6 @@ func NewRouter() http.Handler {
 	postRepo := &repository.PostRepository{DB: dbConn}
 	postHandler := &PostHandler{Posts: postRepo}
 
-
 	mux.HandleFunc("/auth/register", auth.Register)
 	mux.HandleFunc("/auth/login", auth.Login)
 	mux.HandleFunc("/auth/verify-email", auth.VerifyEmail)
@@ -40,8 +39,8 @@ func NewRouter() http.Handler {
 		AuthMiddleware(http.HandlerFunc(userHandler.UploadProfileImage)))
 
 	// POST-------------------------------------------------------------------
-	mux.Handle("/posts",
-		AuthMiddleware(http.HandlerFunc(postHandler.Create))) // POST
+	mux.Handle("/posts", AuthMiddleware(http.HandlerFunc(postHandler.Create))) // POST
+	mux.Handle("/posts/create", AuthMiddleware(http.HandlerFunc(postHandler.Create)))
 
 	mux.HandleFunc("/posts/feed", postHandler.Feed) // GET
 	mux.Handle("/posts/like", AuthMiddleware(http.HandlerFunc(postHandler.Like)))

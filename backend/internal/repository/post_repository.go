@@ -22,7 +22,7 @@ func (r *PostRepository) Create(post *domain.Post) error {
 
 func (r *PostRepository) AddImage(img *domain.PostImage) error {
 	_, err := r.DB.Exec(`
-		INSERT INTO post_images (id, post_id, url, "order")
+		INSERT INTO post_images (id, post_id, image_url, position)
 		VALUES ($1, $2, $3, $4)
 	`, img.ID, img.PostID, img.URL, img.Order)
 
@@ -73,8 +73,6 @@ func (r *PostRepository) DeletePost(postID, userID string) error {
 	return err
 }
 
-
-
 // ---------------- LIKES ----------------
 
 func (r *PostRepository) Like(postID, userID string) error {
@@ -92,7 +90,6 @@ func (r *PostRepository) Unlike(postID, userID string) error {
 	`, postID, userID)
 	return err
 }
-
 
 // ---------------- COMMENTS ----------------
 
@@ -124,7 +121,6 @@ func (r *PostRepository) GetComments(postID string) ([]domain.PostComment, error
 	}
 	return comments, nil
 }
-
 
 // ---------------- SHARES ----------------
 
