@@ -129,28 +129,28 @@ const mockHerbsData: HerbsItem[] = [
     name: "ขมิ้นชัน",
     description: "มีสรรพคุณช่วยบำรุงผิวพรรณ ลดการอักเสบ",
     src: "https://images.unsplash.com/photo-1615485500704-8e990f9900f7?w=400&h=300&fit=crop",
-    href: "/KhaMinChan",
+    href: "/khaminchan",
   },
   {
     id: 2,
     name: "ฟ้าทะลายโจร",
     description: "ช่วยบรรเทาอาการหวัด เสริมสร้างภูมิคุ้มกัน",
     src: "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=400&h=300&fit=crop",
-    href: "/KhaMinChan"
+    href: "/khaminchan"
   },
   {
     id: 3,
     name: "ว่านหางจระเข้",
     description: "บำรุงผิว รักษาแผล ช่วยระบบขับถ่าย",
     src: "https://images.unsplash.com/photo-1509587584298-0f3b3a3a1797?w=400&h=300&fit=crop",
-    href: "/KhaMinChan"
+    href: "/khaminchan"
   },
   {
     id: 4,
     name: "กระชาย",
     description: "แก้ท้องอืด ท้องเฟ้อ บรรเทาอาการปวด",
     src: "https://images.unsplash.com/photo-1516594915697-87eb3b1c14ea?w=400&h=300&fit=crop",
-    href: "/KhaMinChan"
+    href: "/khaminchan"
   }
 ];
 
