@@ -1,5 +1,8 @@
 "use client";
 
+import { useState } from "react";
+import ReportDialog from "../lib/ReportDialog";
+
 interface HerbDetail {
     thaiName: string;
     engName: string;
@@ -12,8 +15,10 @@ interface HerbDetail {
 }
 
 export default function HerbDetailPage({ data }: { data: HerbDetail }) {
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
+
     return (
-        <div className="max-w-2xl mx-auto bg-white min-h-screen pb-10">
+        <div className={`max-w-2xl mx-auto bg-white min-h-screen pb-10 ${isDialogOpen ? 'bg-red-50' : 'bg-white'}`}>
             <div className="w-full aspect-video overflow-hidden rounded-xl shadow-lg">
                 <img
                     src={data.src}
@@ -27,7 +32,9 @@ export default function HerbDetailPage({ data }: { data: HerbDetail }) {
                     <h1 className="text-2xl font-bold text-gray-800">{data.thaiName}</h1>
                     <p className="text-md text-gray-400 italic">{data.engName}</p>
                 </div>
-                <button className="p-2 rounded-full w-15 h-15">
+                <button
+                    onClick={() => setIsDialogOpen(true)}
+                    className="p-2 rounded-full w-15 h-15 cursor-pointer">
                     <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
                         <line x1="32" y1="22" x2="35" y2="28" stroke="#E85D5D" strokeWidth="4" strokeLinecap="round" />
                         <line x1="23" y1="26" x2="31" y2="32" stroke="#E85D5D" strokeWidth="4" strokeLinecap="round" />
@@ -111,6 +118,15 @@ export default function HerbDetailPage({ data }: { data: HerbDetail }) {
                 </section>
 
             </div>
+
+            <ReportDialog
+                isOpen={isDialogOpen}
+                onClose={() => setIsDialogOpen(false)}
+            />
+
         </div>
     );
 }
+
+
+
