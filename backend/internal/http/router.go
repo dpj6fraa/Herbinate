@@ -39,7 +39,7 @@ func NewRouter() http.Handler {
 		AuthMiddleware(http.HandlerFunc(userHandler.UploadProfileImage)))
 
 	// POST-------------------------------------------------------------------
-	mux.Handle("/posts", AuthMiddleware(http.HandlerFunc(postHandler.Create))) // POST
+	//mux.HandleFunc("/posts", postHandler.List) // POST
 	mux.Handle("/posts/create", AuthMiddleware(http.HandlerFunc(postHandler.Create)))
 
 	mux.HandleFunc("/posts/feed", postHandler.Feed) // GET

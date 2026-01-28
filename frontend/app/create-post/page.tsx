@@ -10,7 +10,9 @@ export default function CreatePostPage() {
 
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
-  const [images, setImages] = useState<FileList | null>(null);
+  const [images, setImages] = useState<File[]>([]);
+  const MAX_IMAGES = 5;
+
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -23,7 +25,20 @@ export default function CreatePostPage() {
   }, [router]);
 
   function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
-    setImages(e.target.files);
+    if (!e.target.files) return;
+
+    const selected = Array.from(e.target.files);
+
+    if (images.length + selected.length > MAX_IMAGES) {
+      setError(`อัปโหลดได้สูงสุด ${MAX_IMAGES} รูป`);
+      return;
+    }
+
+    setImages((prev) => [...prev, ...selected]);
+  }
+
+  function removeImage(index: number) {
+    setImages((prev) => prev.filter((_, i) => i !== index));
   }
 
   async function createPost() {
@@ -45,8 +60,8 @@ export default function CreatePostPage() {
     formData.append("content", content);
 
     if (images) {
-      Array.from(images).forEach((file) => {
-        formData.append("images", file); // backend รับ key = images
+      images.forEach((file) => {
+        formData.append("images", file);
       });
     }
 
@@ -111,6 +126,34 @@ export default function CreatePostPage() {
             onChange={handleImageChange}
             className="mb-4"
           />
+
+          {images.length > 0 && (
+            <div className="mb-4">
+              <p className="text-sm text-gray-600 mb-2">
+                เลือกแล้ว {images.length} / {MAX_IMAGES} รูป
+              </p>
+
+              <div className="space-y-2">
+                {images.map((file, index) => (
+                  <div
+                    key={index}
+                    className="flex items-center justify-between bg-gray-100 px-3 py-2 rounded-md"
+                  >
+                    <span className="text-sm text-black truncate w-40">
+                      {file.name}
+                    </span>
+                
+                    <button
+                      onClick={() => removeImage(index)}
+                      className="text-red-500 text-sm"
+                    >
+                      ลบ
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           <button
             onClick={createPost}
