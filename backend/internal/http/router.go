@@ -41,6 +41,7 @@ func NewRouter() http.Handler {
 	// POST-------------------------------------------------------------------
 	//mux.HandleFunc("/posts", postHandler.List) // POST
 	mux.Handle("/posts/create", AuthMiddleware(http.HandlerFunc(postHandler.Create)))
+	mux.HandleFunc("/posts/detail", postHandler.Detail)
 
 	mux.HandleFunc("/posts/feed", postHandler.Feed) // GET
 	mux.Handle("/posts/like", AuthMiddleware(http.HandlerFunc(postHandler.Like)))

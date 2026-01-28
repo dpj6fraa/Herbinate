@@ -82,7 +82,8 @@ export default function CreatePostPage() {
         return;
       }
 
-      router.push("/homepage"); // หรือหน้า feed ของคุณ
+      const data = await res.json();
+      router.push(`/post/${data.post_id}`); // หรือหน้า feed ของคุณ
     } catch (err) {
       setError("เชื่อมต่อเซิร์ฟเวอร์ไม่ได้");
     } finally {

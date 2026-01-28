@@ -46,10 +46,10 @@ func (r *PostRepository) GetFeed() (*sql.Rows, error) {
 
 func (r *PostRepository) GetImages(postID string) ([]domain.PostImage, error) {
 	rows, err := r.DB.Query(`
-		SELECT id, post_id, url, "order"
+		SELECT id, post_id, image_url, position
 		FROM post_images
 		WHERE post_id = $1
-		ORDER BY "order" ASC
+		ORDER BY position ASC
 	`, postID)
 	if err != nil {
 		return nil, err
@@ -101,22 +101,29 @@ func (r *PostRepository) AddComment(c *domain.PostComment) error {
 	return err
 }
 
-func (r *PostRepository) GetComments(postID string) ([]domain.PostComment, error) {
+func (r *PostRepository) GetComments(postID string) ([]domain.CommentWithUser, error) {
 	rows, err := r.DB.Query(`
-		SELECT id, post_id, user_id, content, created_at
-		FROM post_comments
-		WHERE post_id = $1
-		ORDER BY created_at DESC
+		SELECT 
+			c.id,
+			c.user_id,
+			u.username,
+			u.profile_image_url,
+			c.content,
+			c.created_at
+		FROM post_comments c
+		JOIN users u ON u.id = c.user_id
+		WHERE c.post_id = $1
+		ORDER BY c.created_at DESC
 	`, postID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	var comments []domain.PostComment
+	var comments []domain.CommentWithUser
 	for rows.Next() {
-		var c domain.PostComment
-		rows.Scan(&c.ID, &c.PostID, &c.UserID, &c.Content, &c.CreatedAt)
+		var c domain.CommentWithUser
+		rows.Scan(&c.ID, &c.UserID, &c.Username, &c.Profile, &c.Content, &c.CreatedAt)
 		comments = append(comments, c)
 	}
 	return comments, nil
@@ -130,4 +137,38 @@ func (r *PostRepository) Share(postID, userID string) error {
 		VALUES (gen_random_uuid(), $1, $2, NOW())
 	`, postID, userID)
 	return err
+}
+
+func (r *PostRepository) GetPostDetail(postID string) (map[string]interface{}, error) {
+	row := r.DB.QueryRow(`
+		SELECT 
+			p.id, p.title, p.content, p.created_at,
+			u.username, u.profile_image_url,
+			ps.like_count, ps.comment_count, ps.share_count
+		FROM posts p
+		JOIN users u ON u.id = p.user_id
+		LEFT JOIN post_stats ps ON ps.id = p.id
+		WHERE p.id = $1
+	`, postID)
+
+	var id, title, content, username, profileImage sql.NullString
+	var createdAt time.Time
+	var likes, comments, shares sql.NullInt64
+
+	err := row.Scan(&id, &title, &content, &createdAt, &username, &profileImage, &likes, &comments, &shares)
+	if err != nil {
+		return nil, err
+	}
+
+	return map[string]interface{}{
+		"id":         id.String,
+		"title":      title.String,
+		"content":    content.String,
+		"createdAt":  createdAt,
+		"username":   username.String,
+		"profileImg": profileImage.String,
+		"likes":      likes.Int64,
+		"comments":   comments.Int64,
+		"shares":     shares.Int64,
+	}, nil
 }

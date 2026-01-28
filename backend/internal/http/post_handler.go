@@ -85,7 +85,10 @@ func (h *PostHandler) Create(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
-	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(map[string]string{
+		"post_id": postID,
+	})
+
 }
 
 func (h *PostHandler) Feed(w http.ResponseWriter, r *http.Request) {
@@ -145,23 +148,28 @@ func (h *PostHandler) AddComment(w http.ResponseWriter, r *http.Request) {
 		PostID  string `json:"post_id"`
 		Content string `json:"content"`
 	}
-
 	json.NewDecoder(r.Body).Decode(&req)
 
-	h.Posts.AddComment(&domain.PostComment{
+	comment := domain.PostComment{
 		ID:      uuid.NewString(),
 		PostID:  req.PostID,
 		UserID:  userID,
 		Content: req.Content,
-	})
+	}
 
+	h.Posts.AddComment(&comment)
+
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(comment) // ⭐ สำคัญ
 }
 
 func (h *PostHandler) GetComments(w http.ResponseWriter, r *http.Request) {
 	postID := r.URL.Query().Get("post_id")
 
 	comments, _ := h.Posts.GetComments(postID)
+
+	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(comments)
 }
 
@@ -186,4 +194,42 @@ func (h *PostHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
+}
+
+func (h *PostHandler) Detail(w http.ResponseWriter, r *http.Request) {
+	postID := r.URL.Query().Get("post_id")
+	if postID == "" {
+		http.Error(w, "missing post_id", 400)
+		return
+	}
+
+	post, err := h.Posts.GetPostDetail(postID)
+	if err != nil {
+		http.Error(w, "post not found", 404)
+		return
+	}
+
+	imagesData, _ := h.Posts.GetImages(postID)
+	commentsData, _ := h.Posts.GetComments(postID)
+
+	images := []map[string]interface{}{}
+	for _, img := range imagesData {
+		images = append(images, map[string]interface{}{
+			"url":   img.URL,
+			"order": img.Order,
+		})
+	}
+
+	comments := []domain.CommentWithUser{}
+	if commentsData != nil {
+		comments = commentsData
+	}
+
+	resp := map[string]interface{}{
+		"post":     post,
+		"images":   images,
+		"comments": comments,
+	}
+
+	json.NewEncoder(w).Encode(resp)
 }
