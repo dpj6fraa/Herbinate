@@ -22,6 +22,8 @@ func NewRouter() http.Handler {
 	userHandler := &UserHandler{Users: userRepo}
 	emailService := service.NewEmailService() //
 	auth := &AuthHandler{Users: userRepo, OTPs: otpRepo, OTP: otpService, Email: emailService}
+	postRepo := &repository.PostRepository{DB: dbConn}
+	postHandler := &PostHandler{Posts: postRepo}
 
 	mux.HandleFunc("/auth/register", auth.Register)
 	mux.HandleFunc("/auth/login", auth.Login)
@@ -35,6 +37,24 @@ func NewRouter() http.Handler {
 
 	mux.Handle("/users/profile-image",
 		AuthMiddleware(http.HandlerFunc(userHandler.UploadProfileImage)))
+
+	// POST-------------------------------------------------------------------
+	//mux.HandleFunc("/posts", postHandler.List) // POST
+	mux.Handle("/posts/create", AuthMiddleware(http.HandlerFunc(postHandler.Create)))
+	mux.HandleFunc("/posts/detail", postHandler.Detail)
+
+	mux.HandleFunc("/posts/feed", postHandler.Feed) // GET
+	mux.Handle("/posts/like", AuthMiddleware(http.HandlerFunc(postHandler.Like)))
+
+	mux.Handle("/posts/unlike", AuthMiddleware(http.HandlerFunc(postHandler.Unlike)))
+
+	mux.Handle("/posts/comment", AuthMiddleware(http.HandlerFunc(postHandler.AddComment)))
+	mux.HandleFunc("/posts/comments", postHandler.GetComments)
+
+	mux.Handle("/posts/share", AuthMiddleware(http.HandlerFunc(postHandler.Share)))
+
+	mux.Handle("/posts/delete", AuthMiddleware(http.HandlerFunc(postHandler.Delete)))
+	// POST-------------------------------------------------------------------
 
 	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("ok"))
