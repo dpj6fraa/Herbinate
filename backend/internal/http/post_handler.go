@@ -1,6 +1,7 @@
 package http
 
 import (
+	"database/sql"
 	"encoding/json"
 	"net/http"
 
@@ -92,7 +93,18 @@ func (h *PostHandler) Create(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *PostHandler) Feed(w http.ResponseWriter, r *http.Request) {
-	rows, err := h.Posts.GetFeed()
+	// ✅ ตรวจสอบว่ามี token หรือไม่
+	userID := GetUserID(r) // จะได้ "" ถ้าไม่มี token
+
+	var rows *sql.Rows
+	var err error
+
+	if userID != "" {
+		rows, err = h.Posts.GetFeedWithUser(userID)
+	} else {
+		rows, err = h.Posts.GetFeed()
+	}
+
 	if err != nil {
 		http.Error(w, "failed to load feed", 500)
 		return
@@ -105,8 +117,18 @@ func (h *PostHandler) Feed(w http.ResponseWriter, r *http.Request) {
 		var id, title, content, username string
 		var createdAt string
 		var likes, comments, shares int
+		var liked bool // ✅ เพิ่ม
 
-		rows.Scan(&id, &title, &content, &createdAt, &username, &likes, &comments, &shares)
+		if userID != "" {
+			// สำหรับ GetFeedWithUser
+			rows.Scan(&id, &title, &content, &createdAt, &username,
+				&likes, &comments, &shares, &liked)
+		} else {
+			// สำหรับ GetFeed (ไม่มี liked)
+			rows.Scan(&id, &title, &content, &createdAt, &username,
+				&likes, &comments, &shares)
+			liked = false
+		}
 
 		feed = append(feed, map[string]interface{}{
 			"id":        id,
@@ -117,6 +139,7 @@ func (h *PostHandler) Feed(w http.ResponseWriter, r *http.Request) {
 			"likes":     likes,
 			"comments":  comments,
 			"shares":    shares,
+			"liked":     liked, // ✅ ส่งค่านี้กลับไป
 		})
 	}
 

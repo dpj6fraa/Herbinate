@@ -41,3 +41,29 @@ func GetUserID(r *http.Request) string {
 	id, _ := r.Context().Value(userIDKey).(string)
 	return id
 }
+
+func OptionalAuthMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		header := r.Header.Get("Authorization")
+		if header == "" {
+			// ✅ ไม่มี token ก็ผ่านไปได้ แต่ไม่มี userID
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		parts := strings.Split(header, " ")
+		if len(parts) != 2 || parts[0] != "Bearer" {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		claims, err := auth.ParseToken(parts[1])
+		if err != nil {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		ctx := context.WithValue(r.Context(), userIDKey, claims.UserID)
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}

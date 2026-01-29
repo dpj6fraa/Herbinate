@@ -42,6 +42,22 @@ func (r *PostRepository) GetFeed() (*sql.Rows, error) {
 	`)
 }
 
+func (r *PostRepository) GetFeedWithUser(userID string) (*sql.Rows, error) {
+	return r.DB.Query(`
+		SELECT 
+			p.id, p.title, p.content, p.created_at,
+			u.username,
+			ps.like_count, ps.comment_count, ps.share_count,
+			CASE WHEN pl.user_id IS NULL THEN false ELSE true END AS liked
+		FROM posts p
+		JOIN users u ON u.id = p.user_id
+		LEFT JOIN post_stats ps ON ps.id = p.id
+		LEFT JOIN post_likes pl 
+			ON pl.post_id = p.id AND pl.user_id = $1
+		ORDER BY p.created_at DESC
+	`, userID)
+}
+
 // ---------------- IMAGES ----------------
 
 func (r *PostRepository) GetImages(postID string) ([]domain.PostImage, error) {
