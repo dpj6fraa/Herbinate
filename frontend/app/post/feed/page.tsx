@@ -63,6 +63,7 @@ useEffect(() => {
   );
 }
 
+// ถ้าต้องการให้แสดงว่า share ไปแล้ว
 async function sharePost(postID: string) {
   const token = localStorage.getItem("token");
   if (!token) {
@@ -70,22 +71,30 @@ async function sharePost(postID: string) {
     return;
   }
 
-  await fetch(`http://localhost:8080/posts/share?post_id=${postID}`, {
+  const response = await fetch(`http://localhost:8080/posts/share?post_id=${postID}`, {
     method: "POST",
     headers: { Authorization: `Bearer ${token}` },
   });
+
+  const data = await response.json();
 
   // 📋 copy link
   const url = `${window.location.origin}/post/${postID}`;
   await navigator.clipboard.writeText(url);
 
-  alert("คัดลอกลิงก์โพสต์แล้ว!");
-
-  setPosts((prev) =>
-    prev.map((p) =>
-      p.id === postID ? { ...p, shares: p.shares + 1 } : p
-    )
-  );
+  if (data.success) {
+    // ✅ Share สำเร็จครั้งแรก - เพิ่มตัวเลข
+    alert("คัดลอกลิงก์โพสต์แล้ว!");
+    
+    setPosts((prev) =>
+      prev.map((p) =>
+        p.id === postID ? { ...p, shares: p.shares + 1 } : p
+      )
+    );
+  } else {
+    // ❌ Share ซ้ำ - ไม่เพิ่มตัวเลข แค่คัดลอกลิงก์
+    alert("คัดลอกลิงก์โพสต์แล้ว (คุณ share ไปแล้ว)");
+  }
 }
 
 

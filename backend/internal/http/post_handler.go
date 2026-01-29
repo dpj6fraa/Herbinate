@@ -197,12 +197,30 @@ func (h *PostHandler) GetComments(w http.ResponseWriter, r *http.Request) {
 }
 
 // ---------- SHARE ----------
+// internal/http/post_handler.go
+
 func (h *PostHandler) Share(w http.ResponseWriter, r *http.Request) {
 	userID := GetUserID(r)
 	postID := r.URL.Query().Get("post_id")
 
-	h.Posts.Share(postID, userID)
+	success, err := h.Posts.Share(postID, userID)
+	if err != nil {
+		http.Error(w, "failed to share", 500)
+		return
+	}
+
+	// ✅ ส่งกลับว่า share สำเร็จหรือไม่
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"success": success,
+		"message": func() string {
+			if success {
+				return "shared"
+			}
+			return "already shared"
+		}(),
+	})
 }
 
 // ---------- DELETE POST ----------

@@ -147,12 +147,21 @@ func (r *PostRepository) GetComments(postID string) ([]domain.CommentWithUser, e
 
 // ---------------- SHARES ----------------
 
-func (r *PostRepository) Share(postID, userID string) error {
-	_, err := r.DB.Exec(`
+// internal/repository/post.go
+
+func (r *PostRepository) Share(postID, userID string) (bool, error) {
+	result, err := r.DB.Exec(`
 		INSERT INTO post_shares (id, post_id, user_id, created_at)
 		VALUES (gen_random_uuid(), $1, $2, NOW())
+		ON CONFLICT (post_id, user_id) DO NOTHING
 	`, postID, userID)
-	return err
+
+	if err != nil {
+		return false, err
+	}
+
+	rows, _ := result.RowsAffected()
+	return rows > 0, nil // ✅ return true ถ้า insert สำเร็จ
 }
 
 func (r *PostRepository) GetPostDetail(postID string) (map[string]interface{}, error) {
