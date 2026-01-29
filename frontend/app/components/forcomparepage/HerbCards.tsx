@@ -16,7 +16,7 @@ export default function HerbCards({ data }: { data: Herb[] }) {
             {
                 data?.map((item) => {
                     return (
-                        <div key={item.id} className="shrink-0 w-fit snap-start rounded-2xl overflow-hidden shadow-2xl md:w-fit">
+                        <div key={item.id} className="shrink-0 w-fit snap-start rounded-2xl overflow-hidden shadow-2xl md:w-fit cursor-pointer">
                             <div className="border w-45 flex flex-col items-center text-center rounded-2xl overflow-hidden bg-[#F7FFF7] md:w-50 lg:w-80">
                                 <div className="w-full h-24 rounded-t-2xl overflow-hidden shadow-md bg-white lg:h-36">
                                     <img

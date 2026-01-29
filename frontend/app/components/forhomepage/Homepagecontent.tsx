@@ -160,28 +160,28 @@ const mockNewsData: HerbsItem[] = [
     name: "",
     description: "กระทรวงสาธารณสุขผลักดันสมุนไพรไทยสู่ตลาดโลก ปี 2568",
     src: "https://images.unsplash.com/photo-1505751172876-fa1923c5c528?w=400&h=300&fit=crop",
-    href: ""
+    href: "/focusontumeric"
   },
   {
     id: 2,
     name: "",
     description: "งานวิจัยใหม่พบสรรพคุณของขมิ้นชันในการต้านมะเร็ง",
     src: "https://images.unsplash.com/photo-1471864190281-a93a3070b6de?w=400&h=300&fit=crop",
-    href: ""
+    href: "/focusontumeric"
   },
   {
     id: 3,
     name: "",
     description: "เกษตรกรไทยปลูกสมุนไพรออรแกนิกเพิ่มขึ้น 40%",
     src: "https://images.unsplash.com/photo-1464226184884-fa280b87c399?w=400&h=300&fit=crop",
-    href: ""
+    href: "/focusontumeric"
   },
   {
     id: 4,
     name: "",
     description: "WHO รับรองมาตรฐานสมุนไพรไทย 15 ชนิด",
     src: "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=400&h=300&fit=crop",
-    href: ""
+    href: "/focusontumeric"
   }
 ];
 
