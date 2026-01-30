@@ -197,3 +197,22 @@ func (r *PostRepository) GetPostDetail(postID string) (map[string]interface{}, e
 		"shares":     shares.Int64,
 	}, nil
 }
+
+func (r *PostRepository) GetCommentWithUser(commentID string) (domain.CommentWithUser, error) {
+	row := r.DB.QueryRow(`
+		SELECT 
+			c.id,
+			c.user_id,
+			u.username,
+			u.profile_image_url,
+			c.content,
+			c.created_at
+		FROM post_comments c
+		JOIN users u ON u.id = c.user_id
+		WHERE c.id = $1
+	`, commentID)
+
+	var c domain.CommentWithUser
+	err := row.Scan(&c.ID, &c.UserID, &c.Username, &c.Profile, &c.Content, &c.CreatedAt)
+	return c, err
+}

@@ -180,11 +180,18 @@ func (h *PostHandler) AddComment(w http.ResponseWriter, r *http.Request) {
 		Content: req.Content,
 	}
 
-	h.Posts.AddComment(&comment)
+	err := h.Posts.AddComment(&comment)
+	if err != nil {
+		http.Error(w, "failed", 500)
+		return
+	}
+
+	// ⭐ ดึง comment แบบมี user info กลับมา
+	c, _ := h.Posts.GetCommentWithUser(comment.ID)
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(comment) // ⭐ สำคัญ
+	json.NewEncoder(w).Encode(c)
 }
 
 func (h *PostHandler) GetComments(w http.ResponseWriter, r *http.Request) {
