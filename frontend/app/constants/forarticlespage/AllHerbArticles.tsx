@@ -11,11 +11,13 @@ const Article = [
     {id: 8,name: "เจาะลึก 'ขมิ้นชัน' ราชินีสมุนไพรต้านอักเสบ",author: "อาชวิน",src: "/images/kha-min-chan.jpg"},
     {id: 9,name: "เจาะลึก 'ขมิ้นชัน' ราชินีสมุนไพรต้านอักเสบ",author: "อาชวิน",src: "/images/kha-min-chan.jpg"},
     {id: 10,name: "เจาะลึก 'ขมิ้นชัน' ราชินีสมุนไพรต้านอักเสบ",author: "อาชวิน",src: "/images/kha-min-chan.jpg"},
+    {id: 11,name: "เจาะลึก 'ขมิ้นชัน' ราชินีสมุนไพรต้านอักเสบ",author: "อาชวิน",src: "/images/kha-min-chan.jpg"},
+    {id: 12,name: "เจาะลึก 'ขมิ้นชัน' ราชินีสมุนไพรต้านอักเสบ",author: "อาชวิน",src: "/images/kha-min-chan.jpg"},
 ]
 
 export default function AllHerbsArticles() {
     return (
-        <div className="grid grid-cols-2 place-items-center m-6 gap-y-5 gap-x-6 md:w-fit">
+        <div className="grid grid-cols-3 place-items-center m-6 gap-y-5 gap-x-6 md:w-fit sm:grid-cols-2">
             <ArticleCards data={Article}/>
         </div>
     )
