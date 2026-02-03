@@ -42,6 +42,22 @@ func (r *PostRepository) GetFeed() (*sql.Rows, error) {
 	`)
 }
 
+func (r *PostRepository) GetFeedWithUser(userID string) (*sql.Rows, error) {
+	return r.DB.Query(`
+		SELECT 
+			p.id, p.title, p.content, p.created_at,
+			u.username,
+			ps.like_count, ps.comment_count, ps.share_count,
+			CASE WHEN pl.user_id IS NULL THEN false ELSE true END AS liked
+		FROM posts p
+		JOIN users u ON u.id = p.user_id
+		LEFT JOIN post_stats ps ON ps.id = p.id
+		LEFT JOIN post_likes pl 
+			ON pl.post_id = p.id AND pl.user_id = $1
+		ORDER BY p.created_at DESC
+	`, userID)
+}
+
 // ---------------- IMAGES ----------------
 
 func (r *PostRepository) GetImages(postID string) ([]domain.PostImage, error) {
@@ -131,12 +147,21 @@ func (r *PostRepository) GetComments(postID string) ([]domain.CommentWithUser, e
 
 // ---------------- SHARES ----------------
 
-func (r *PostRepository) Share(postID, userID string) error {
-	_, err := r.DB.Exec(`
+// internal/repository/post.go
+
+func (r *PostRepository) Share(postID, userID string) (bool, error) {
+	result, err := r.DB.Exec(`
 		INSERT INTO post_shares (id, post_id, user_id, created_at)
 		VALUES (gen_random_uuid(), $1, $2, NOW())
+		ON CONFLICT (post_id, user_id) DO NOTHING
 	`, postID, userID)
-	return err
+
+	if err != nil {
+		return false, err
+	}
+
+	rows, _ := result.RowsAffected()
+	return rows > 0, nil // ✅ return true ถ้า insert สำเร็จ
 }
 
 func (r *PostRepository) GetPostDetail(postID string) (map[string]interface{}, error) {
@@ -171,4 +196,23 @@ func (r *PostRepository) GetPostDetail(postID string) (map[string]interface{}, e
 		"comments":   comments.Int64,
 		"shares":     shares.Int64,
 	}, nil
+}
+
+func (r *PostRepository) GetCommentWithUser(commentID string) (domain.CommentWithUser, error) {
+	row := r.DB.QueryRow(`
+		SELECT 
+			c.id,
+			c.user_id,
+			u.username,
+			u.profile_image_url,
+			c.content,
+			c.created_at
+		FROM post_comments c
+		JOIN users u ON u.id = c.user_id
+		WHERE c.id = $1
+	`, commentID)
+
+	var c domain.CommentWithUser
+	err := row.Scan(&c.ID, &c.UserID, &c.Username, &c.Profile, &c.Content, &c.CreatedAt)
+	return c, err
 }

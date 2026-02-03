@@ -1,6 +1,7 @@
 package http
 
 import (
+	"database/sql"
 	"encoding/json"
 	"net/http"
 
@@ -92,7 +93,18 @@ func (h *PostHandler) Create(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *PostHandler) Feed(w http.ResponseWriter, r *http.Request) {
-	rows, err := h.Posts.GetFeed()
+	// ✅ ตรวจสอบว่ามี token หรือไม่
+	userID := GetUserID(r) // จะได้ "" ถ้าไม่มี token
+
+	var rows *sql.Rows
+	var err error
+
+	if userID != "" {
+		rows, err = h.Posts.GetFeedWithUser(userID)
+	} else {
+		rows, err = h.Posts.GetFeed()
+	}
+
 	if err != nil {
 		http.Error(w, "failed to load feed", 500)
 		return
@@ -105,8 +117,18 @@ func (h *PostHandler) Feed(w http.ResponseWriter, r *http.Request) {
 		var id, title, content, username string
 		var createdAt string
 		var likes, comments, shares int
+		var liked bool // ✅ เพิ่ม
 
-		rows.Scan(&id, &title, &content, &createdAt, &username, &likes, &comments, &shares)
+		if userID != "" {
+			// สำหรับ GetFeedWithUser
+			rows.Scan(&id, &title, &content, &createdAt, &username,
+				&likes, &comments, &shares, &liked)
+		} else {
+			// สำหรับ GetFeed (ไม่มี liked)
+			rows.Scan(&id, &title, &content, &createdAt, &username,
+				&likes, &comments, &shares)
+			liked = false
+		}
 
 		feed = append(feed, map[string]interface{}{
 			"id":        id,
@@ -117,6 +139,7 @@ func (h *PostHandler) Feed(w http.ResponseWriter, r *http.Request) {
 			"likes":     likes,
 			"comments":  comments,
 			"shares":    shares,
+			"liked":     liked, // ✅ ส่งค่านี้กลับไป
 		})
 	}
 
@@ -157,11 +180,18 @@ func (h *PostHandler) AddComment(w http.ResponseWriter, r *http.Request) {
 		Content: req.Content,
 	}
 
-	h.Posts.AddComment(&comment)
+	err := h.Posts.AddComment(&comment)
+	if err != nil {
+		http.Error(w, "failed", 500)
+		return
+	}
+
+	// ⭐ ดึง comment แบบมี user info กลับมา
+	c, _ := h.Posts.GetCommentWithUser(comment.ID)
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(comment) // ⭐ สำคัญ
+	json.NewEncoder(w).Encode(c)
 }
 
 func (h *PostHandler) GetComments(w http.ResponseWriter, r *http.Request) {
@@ -174,12 +204,30 @@ func (h *PostHandler) GetComments(w http.ResponseWriter, r *http.Request) {
 }
 
 // ---------- SHARE ----------
+// internal/http/post_handler.go
+
 func (h *PostHandler) Share(w http.ResponseWriter, r *http.Request) {
 	userID := GetUserID(r)
 	postID := r.URL.Query().Get("post_id")
 
-	h.Posts.Share(postID, userID)
+	success, err := h.Posts.Share(postID, userID)
+	if err != nil {
+		http.Error(w, "failed to share", 500)
+		return
+	}
+
+	// ✅ ส่งกลับว่า share สำเร็จหรือไม่
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"success": success,
+		"message": func() string {
+			if success {
+				return "shared"
+			}
+			return "already shared"
+		}(),
+	})
 }
 
 // ---------- DELETE POST ----------

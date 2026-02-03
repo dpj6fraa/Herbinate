@@ -3,6 +3,7 @@ package service
 import (
 	"fmt"
 	"net/smtp"
+	"os"
 )
 
 type EmailService struct {
@@ -15,11 +16,11 @@ type EmailService struct {
 
 func NewEmailService() *EmailService {
 	return &EmailService{
-		Host:     "smtp.gmail.com",
-		Port:     "587",
-		Username: "dpj6fraa@gmail.com",
-		Password: "nfhh yzui rleo funn", // ❗ ไม่ใช่รหัส gmail ปกติ
-		From:     "Herbinate <dpj6fraa@gmail.com>",
+		Host:     os.Getenv("SMTP_HOST"),
+		Port:     os.Getenv("SMTP_PORT"),
+		Username: os.Getenv("SMTP_USER"),
+		Password: os.Getenv("SMTP_PASS"),
+		From:     os.Getenv("SMTP_FROM"),
 	}
 }
 

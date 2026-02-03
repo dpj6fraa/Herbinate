@@ -92,7 +92,7 @@ export default function CreatePostPage() {
   }
 
   return (
-    <div className="min-h-svh bg-white flex flex-col">
+    <div className="min-h-svh text-black bg-white flex flex-col">
       <Nav />
 
       <div className="flex-1 px-4 py-6">

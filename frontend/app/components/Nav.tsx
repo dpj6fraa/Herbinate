@@ -114,7 +114,7 @@ useEffect(() => {
                     </div>
 
                     <div className="flex flex-col items-center mt-3 sm:mt-4 md:mt-5 cursor-pointer">
-                        <Link href="" className="flex flex-col items-center cursor-pointer gap-0.5">
+                        <Link href="/aisearch/text" className="flex flex-col items-center cursor-pointer gap-0.5">
                             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M19 3H16.82C16.4 1.84 15.3 1 14 1H10C8.7 1 7.6 1.84 7.18 3H5C3.9 3 3 3.9 3 5V21C3 22.1 3.9 23 5 23H19C20.1 23 21 22.1 21 21V5C21 3.9 20.1 3 19 3Z" fill="currentColor" />
                                 <path d="M14 3H10V5H14V3Z" fill="white" />
@@ -129,7 +129,7 @@ useEffect(() => {
                     </div>
 
                     <div className="flex flex-col items-center mt-3 sm:mt-4 md:mt-5 cursor-pointer">
-                        <Link href="" className="flex flex-col items-center cursor-pointer gap-0.5">
+                        <Link href="/aisearch/image" className="flex flex-col items-center cursor-pointer gap-0.5">
                             <svg
                                 width="22"
                                 height="22"

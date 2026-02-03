@@ -43,7 +43,7 @@ func NewRouter() http.Handler {
 	mux.Handle("/posts/create", AuthMiddleware(http.HandlerFunc(postHandler.Create)))
 	mux.HandleFunc("/posts/detail", postHandler.Detail)
 
-	mux.HandleFunc("/posts/feed", postHandler.Feed) // GET
+	mux.Handle("/posts/feed", OptionalAuthMiddleware(http.HandlerFunc(postHandler.Feed))) // GET
 	mux.Handle("/posts/like", AuthMiddleware(http.HandlerFunc(postHandler.Like)))
 
 	mux.Handle("/posts/unlike", AuthMiddleware(http.HandlerFunc(postHandler.Unlike)))

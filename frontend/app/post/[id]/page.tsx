@@ -99,107 +99,107 @@ export default function PostDetailPage() {
 }
 
   return (
-    <div className="min-h-svh bg-white flex flex-col">
-      <Nav />
+ <div className="min-h-svh bg-white flex flex-col">
+  <Nav />
 
-      <div className="flex-1 px-4 py-6 max-w-xl mx-auto">
+  {/* ✅ ครอบทั้งโพสต์ + คอมเมนต์ */}
+  <div className="flex-1 px-4 py-6 max-w-xl mx-auto w-full">
 
-        {/* 👤 User */}
-        <div className="flex items-center gap-3 mb-4">
-          <img
-            src={`http://localhost:8080${data.post.profileImg}`}
-            className="w-10 h-10 rounded-full object-cover"
-          />
-          <div>
-            <p className="font-semibold text-black">{data.post.username}</p>
-            <p className="text-xs text-gray-500">
-              {new Date(data.post.createdAt).toLocaleString()}
-            </p>
-          </div>
-        </div>
-
-        {/* 📝 Title */}
-        <h1 className="text-xl font-bold text-black mb-2">
-          {data.post.title}
-        </h1>
-
-        {/* 📄 Content */}
-        <p className="text-black mb-4 whitespace-pre-line">
-          {data.post.content}
-        </p>
-
-        {/* 🖼 Images */}
-        {data.images?.length > 0 && (
-          <div className="space-y-3 mb-4">
-            {data.images
-              .sort((a, b) => a.order - b.order)   // 👈 ใช้ position
-              .map((img, i) => (
-                <img
-                  key={i}
-                  src={`http://localhost:8080${img.url}`}
-                  className="rounded-lg w-full"
-                />
-              ))}
-          </div>
-        )}
-
-
-        {/* 📊 Stats */}
-        <div className="flex justify-between text-sm text-gray-600 border-y py-2 mb-4">
-          <span>👍 {data.post.likes}</span>
-          <span>💬 {data.post.comments}</span>
-          <span>↪ {data.post.shares}</span>
-        </div>
-
-      </div>
-      {/* 💬 Comment Box */}
-<div className="mb-6">
-  <div className="flex gap-2">
-    <input
-      type="text"
-      placeholder="เขียนคอมเมนต์..."
-      value={commentText}
-      onChange={(e) => setCommentText(e.target.value)}
-      className="flex-1 px-3 py-2 rounded-md bg-[#EEFFE5] text-black focus:ring-2 focus:ring-[#71CE61]"
-    />
-    <button
-      onClick={sendComment}
-      disabled={sending}
-      className="px-4 py-2 bg-[#71CE61] text-white rounded-md text-sm"
-    >
-      ส่ง
-    </button>
-  </div>
-</div>
-
-{/* 📜 Comment List */}
-<div className="space-y-4">
-  {data.comments.length === 0 && (
-    <p className="text-sm text-gray-500 text-center">ยังไม่มีคอมเมนต์</p>
-  )}
-
-{data.comments.map((c) => (
-  <div key={c.id} className="bg-[#F5F5F5] p-3 rounded-lg">
-    <div className="flex items-center gap-2 mb-1">
+    {/* 👤 User */}
+    <div className="flex items-center gap-3 mb-4">
       <img
-        src={`http://localhost:8080${c.profileImg}`}
-        className="w-7 h-7 rounded-full object-cover"
+        src={`http://localhost:8080${data.post.profileImg}`}
+        className="w-10 h-10 rounded-full object-cover"
       />
-      <span className="text-sm font-semibold">{c.username}</span>
+      <div>
+        <p className="font-semibold text-black">{data.post.username}</p>
+        <p className="text-xs text-gray-500">
+          {new Date(data.post.createdAt).toLocaleString()}
+        </p>
+      </div>
     </div>
 
-    <p className="text-sm text-black">{c.content}</p>
+    <h1 className="text-xl font-bold text-black mb-2">
+      {data.post.title}
+    </h1>
 
-    <p className="text-xs text-gray-500 mt-1">
-      {new Date(c.created_at).toLocaleString()}
+    <p className="text-black mb-4 whitespace-pre-line">
+      {data.post.content}
     </p>
-  </div>
-))}
 
+    {/* 🖼 Images */}
+    {data.images?.length > 0 && (
+      <div className="space-y-3 mb-4">
+        {data.images
+          .sort((a, b) => a.order - b.order)
+          .map((img, i) => (
+            <img
+              key={i}
+              src={`http://localhost:8080${img.url}`}
+              className="rounded-lg w-full"
+            />
+          ))}
+      </div>
+    )}
+
+    {/* 📊 Stats */}
+    <div className="flex justify-between text-sm text-gray-600 border-y py-2 mb-6">
+      <span>👍 {data.post.likes}</span>
+      <span>💬 {data.post.comments}</span>
+      <span>↪ {data.post.shares}</span>
+    </div>
+
+    {/* 💬 Comment Box */}
+    <div className="mb-6">
+      <div className="flex gap-2">
+        <input
+          type="text"
+          placeholder="เขียนคอมเมนต์..."
+          value={commentText}
+          onChange={(e) => setCommentText(e.target.value)}
+          className="flex-1 px-3 py-2 rounded-md bg-[#EEFFE5] text-black placeholder:text-gray-500 focus:ring-2 focus:ring-[#71CE61]"
+        />
+        <button
+          onClick={sendComment}
+          disabled={sending}
+          className="px-4 py-2 bg-[#71CE61] text-white rounded-md text-sm"
+        >
+          ส่ง
+        </button>
+      </div>
+    </div>
+
+    {/* 📜 Comment List */}
+    <div className="space-y-4">
+      {data.comments.length === 0 && (
+        <p className="text-sm text-gray-500 text-center">ยังไม่มีคอมเมนต์</p>
+      )}
+
+      {data.comments.map((c) => (
+        <div key={c.id} className="bg-[#F5F5F5] p-3 rounded-lg">
+          <div className="flex items-center gap-2 mb-1">
+            <img
+              src={`http://localhost:8080${c.profileImg}`}
+              className="w-7 h-7 rounded-full object-cover"
+            />
+            <span className="text-sm font-semibold text-black">
+              {c.username}
+            </span>
+          </div>
+
+          <p className="text-sm text-black">{c.content}</p>
+
+          <p className="text-xs text-gray-500 mt-1">
+            {new Date(c.created_at).toLocaleString()}
+          </p>
+        </div>
+      ))}
+    </div>
+
+  </div>
+
+  <Footer />
 </div>
 
-
-      <Footer />
-    </div>
   );
 }
