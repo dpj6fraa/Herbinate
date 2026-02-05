@@ -93,7 +93,7 @@ useEffect(() => {
                 <div className="flex w-full max-w-md justify-between text-black">
 
                     <div className="flex flex-col items-center mt-3 sm:mt-4 md:mt-5 cursor-pointer">
-                        <Link href="" className="flex flex-col items-center cursor-pointer gap-0.5">
+                        <Link href="/homepage" className="flex flex-col items-center cursor-pointer gap-0.5">
                             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                 <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
                             </svg>
@@ -150,7 +150,7 @@ useEffect(() => {
                     </div>
 
                     <div className="flex flex-col items-center mt-3 sm:mt-4 md:mt-5 cursor-pointer">
-                        <Link href="" className="flex flex-col items-center cursor-pointer gap-0.5">
+                        <Link href="comparepage" className="flex flex-col items-center cursor-pointer gap-0.5">
                             <svg width="22" height="22" viewBox="0 0 400 450" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <g transform="scale(1.2) translate(-35, -20)">
                                     <path d="M200 180V300M150 380L200 300L250 380H150Z" stroke="black" strokeWidth="12" strokeLinecap="round" strokeLinejoin="round" fill="black" />
