@@ -1,14 +1,25 @@
 package config
 
-import "os"
+import (
+	"log"
+	"os"
+
+	"github.com/joho/godotenv"
+)
 
 type Config struct {
 	Port string
 }
 
 func Load() *Config {
+	// Load environment variables
+	err := godotenv.Load("./.env")
+	if err != nil {
+		log.Println("Warning: Error loading .env file, using system environment variables")
+	}
+
 	return &Config{
-		Port: getEnv("PORT", "8080"),
+		Port: getEnv("PORT", "8081"),
 	}
 }
 

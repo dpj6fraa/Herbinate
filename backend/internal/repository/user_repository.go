@@ -1,116 +1,132 @@
 package repository
 
 import (
-	"database/sql"
+	"context"
 	"errors"
-	"fmt"
+	"time"
 
-	"myapp/internal/domain"
+	"herb-api/internal/database"
+	"herb-api/internal/models"
+
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type UserRepository struct {
-	DB *sql.DB
+	Collection *mongo.Collection
 }
 
-func (r *UserRepository) Create(user *domain.User) error {
-	_, err := r.DB.Exec(
-		`INSERT INTO users (id, email, password_hash, username, isverify, profile_image_url)
-		 VALUES ($1, $2, $3, $4, $5, $6)`,
-		user.ID,
-		user.Email,
-		user.PasswordHash,
-		user.Username,
-		user.IsVerified,
-		user.ProfileImageURL,
+func NewUserRepository() *UserRepository {
+	return &UserRepository{
+		Collection: database.GetCollection("users"),
+	}
+}
+
+func (r *UserRepository) Create(user *models.User) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	user.CreatedAt = time.Now()
+	user.UpdatedAt = time.Now()
+
+	result, err := r.Collection.InsertOne(ctx, user)
+	if err == nil {
+		user.ID = result.InsertedID.(primitive.ObjectID)
+	}
+	return err
+}
+
+func (r *UserRepository) FindByEmail(email string) (*models.User, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	var user models.User
+	err := r.Collection.FindOne(ctx, bson.M{"email": email}).Decode(&user)
+
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	return &user, nil
+}
+
+func (r *UserRepository) FindByID(id primitive.ObjectID) (*models.User, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	var user models.User
+	err := r.Collection.FindOne(ctx, bson.M{"_id": id}).Decode(&user)
+
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	return &user, nil
+}
+
+func (r *UserRepository) MarkVerifiedByEmail(email string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	result, err := r.Collection.UpdateOne(
+		ctx,
+		bson.M{"email": email},
+		bson.M{"$set": bson.M{"is_verified": true, "updated_at": time.Now()}},
 	)
 
 	if err != nil {
-		return fmt.Errorf("failed to create user: %w", err)
+		return err
+	}
+	if result.MatchedCount == 0 {
+		return errors.New("user not found")
 	}
 
 	return nil
 }
 
-func (r *UserRepository) FindByEmail(email string) (*domain.User, error) {
-	row := r.DB.QueryRow(
-		`SELECT id, email, password_hash, username, isverify, created_at, profile_image_url
-		 FROM users
-		 WHERE email = $1`,
-		email,
+func (r *UserRepository) UpdateProfileImage(userID primitive.ObjectID, imageURL string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	result, err := r.Collection.UpdateOne(
+		ctx,
+		bson.M{"_id": userID},
+		bson.M{"$set": bson.M{"profile_image_url": imageURL, "updated_at": time.Now()}},
 	)
 
-	var u domain.User
-	err := row.Scan(
-		&u.ID,
-		&u.Email,
-		&u.PasswordHash,
-		&u.Username,
-		&u.IsVerified,
-		&u.CreatedAt,
-		&u.ProfileImageURL,
-	)
-
-	if errors.Is(err, sql.ErrNoRows) {
-		return nil, nil
-	}
 	if err != nil {
-		return nil, err
+		return err
+	}
+	if result.MatchedCount == 0 {
+		return errors.New("user not found")
 	}
 
-	return &u, nil
+	return nil
 }
 
-func (r *UserRepository) FindByID(id string) (*domain.User, error) {
-	row := r.DB.QueryRow(
-		`SELECT id, email, password_hash, username, isverify, created_at, profile_image_url
-		 FROM users
-		 WHERE id = $1`,
-		id,
+func (r *UserRepository) UpdateUsername(userID primitive.ObjectID, username string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	result, err := r.Collection.UpdateOne(
+		ctx,
+		bson.M{"_id": userID},
+		bson.M{"$set": bson.M{"username": username, "updated_at": time.Now()}},
 	)
 
-	var u domain.User
-	err := row.Scan(
-		&u.ID,
-		&u.Email,
-		&u.PasswordHash,
-		&u.Username,
-		&u.IsVerified,
-		&u.CreatedAt,
-		&u.ProfileImageURL,
-	)
-
-	if errors.Is(err, sql.ErrNoRows) {
-		return nil, nil
-	}
 	if err != nil {
-		return nil, err
+		return err
+	}
+	if result.MatchedCount == 0 {
+		return errors.New("user not found")
 	}
 
-	return &u, nil
-}
-
-func (r *UserRepository) MarkVerifiedByEmail(email string) error {
-	_, err := r.DB.Exec(
-		`UPDATE users SET isverify = true WHERE email = $1`,
-		email,
-	)
-	return err
-}
-
-func (r *UserRepository) UpdateProfileImage(userID, imageURL string) error {
-	_, err := r.DB.Exec(
-		`UPDATE users SET profile_image_url = $1 WHERE id = $2`,
-		imageURL,
-		userID,
-	)
-	return err
-}
-
-func (r *UserRepository) UpdateUsername(userID, username string) error {
-	_, err := r.DB.Exec(
-		`UPDATE users SET username = $1 WHERE id = $2`,
-		username,
-		userID,
-	)
-	return err
+	return nil
 }

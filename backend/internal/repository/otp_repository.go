@@ -1,52 +1,72 @@
 package repository
 
 import (
-	"database/sql"
+	"context"
+	"errors"
 	"time"
 
-	"myapp/internal/domain"
+	"herb-api/internal/database"
+	"herb-api/internal/models"
+
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type OTPRepository struct {
-	DB *sql.DB
+	Collection *mongo.Collection
 }
 
-func (r *OTPRepository) Create(otp *domain.EmailOTP) error {
-	_, err := r.DB.Exec(`
-		INSERT INTO email_otp (email, code, expires_at)
-		VALUES ($1, $2, $3)
-	`, otp.Email, otp.Code, time.Now().Add(10*time.Minute))
-
-	return err
+func NewOTPRepository() *OTPRepository {
+	return &OTPRepository{
+		Collection: database.GetCollection("otps"),
+	}
 }
 
-func (r *OTPRepository) FindByEmail(email string) (*domain.EmailOTP, error) {
-	row := r.DB.QueryRow(`
-		SELECT email, code, expires_at
-		FROM email_otp
-		WHERE email = $1
-		ORDER BY expires_at DESC
-		LIMIT 1
-	`, email)
+// SaveOTP บันทึก OTP ลง MongoDB
+func (r *OTPRepository) SaveOTP(email, code string, duration time.Duration) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
 
-	var otp domain.EmailOTP
-	if err := row.Scan(&otp.Email, &otp.Code, &otp.ExpiresAt); err != nil {
-		return nil, err
+	otp := models.OTP{
+		Email:     email,
+		Code:      code,
+		ExpiresAt: time.Now().Add(duration),
+		CreatedAt: time.Now(),
 	}
 
-	return &otp, nil
-}
+	// ลบ OTP เก่าของอีเมลนี้ทิ้งก่อน (ถ้ามี)
+	_, _ = r.Collection.DeleteMany(ctx, bson.M{"email": email})
 
-func (r *OTPRepository) Replace(email, code string) error {
-	r.DeleteByEmail(email)
-	_, err := r.DB.Exec(`
-		INSERT INTO email_otp (email, code, expires_at)
-		VALUES ($1, $2, $3)
-	`, email, code, time.Now().Add(10*time.Minute))
-
+	// บันทึก OTP ใหม่
+	_, err := r.Collection.InsertOne(ctx, otp)
 	return err
 }
 
-func (r *OTPRepository) DeleteByEmail(email string) {
-	r.DB.Exec(`DELETE FROM email_otp WHERE email = $1`, email)
+// VerifyOTP ตรวจสอบว่า OTP ถูกต้องและยังไม่หมดอายุหรือไม่
+func (r *OTPRepository) VerifyOTP(email, code string) (bool, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	var otp models.OTP
+	err := r.Collection.FindOne(ctx, bson.M{
+		"email": email,
+		"code":  code,
+	}).Decode(&otp)
+
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return false, errors.New("invalid otp")
+		}
+		return false, err
+	}
+
+	// ตรวจสอบวันหมดอายุ
+	if time.Now().After(otp.ExpiresAt) {
+		return false, errors.New("otp expired")
+	}
+
+	// ถ้าถูกต้อง ให้ลบ OTP ทิ้งเพื่อไม่ให้ใช้ซ้ำ
+	_, _ = r.Collection.DeleteOne(ctx, bson.M{"_id": otp.ID})
+
+	return true, nil
 }

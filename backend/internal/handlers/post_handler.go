@@ -1,0 +1,289 @@
+package handlers
+
+import (
+	"io"
+	"os"
+	"path/filepath"
+
+	"herb-api/internal/middleware"
+	"herb-api/internal/models"
+	"herb-api/internal/repository"
+
+	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+)
+
+type PostHandler struct {
+	Posts *repository.PostRepository
+}
+
+func NewPostHandler(repo *repository.PostRepository) *PostHandler {
+	return &PostHandler{Posts: repo}
+}
+
+// Helper function to get user ID from context (assuming you set it in AuthMiddleware)
+func getUserIDFromContext(c *fiber.Ctx) primitive.ObjectID {
+	return middleware.GetUserID(c)
+}
+
+func (h *PostHandler) CreatePost(c *fiber.Ctx) error {
+	userID := getUserIDFromContext(c)
+
+	title := c.FormValue("title")
+	content := c.FormValue("content")
+
+	if title == "" || content == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "missing fields"})
+	}
+
+	post := &models.Post{
+		UserID:  userID,
+		Title:   title,
+		Content: content,
+	}
+
+	if err := h.Posts.Create(post); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to create post"})
+	}
+
+	// 📁 โฟลเดอร์เก็บรูป
+	uploadDir := "./uploads/posts/"
+	os.MkdirAll(uploadDir, os.ModePerm)
+
+	form, err := c.MultipartForm()
+	if err == nil {
+		files := form.File["images"]
+		for i, fileHeader := range files {
+			file, err := fileHeader.Open()
+			if err != nil {
+				continue
+			}
+			defer file.Close()
+
+			ext := filepath.Ext(fileHeader.Filename)
+			filename := uuid.NewString() + ext
+			filePath := uploadDir + filename
+
+			dst, err := os.Create(filePath)
+			if err != nil {
+				continue
+			}
+			defer dst.Close()
+
+			io.Copy(dst, file)
+
+			imageURL := "/uploads/posts/" + filename
+
+			h.Posts.AddImage(post.ID, &models.PostImage{
+				URL:      imageURL,
+				Position: i,
+			})
+		}
+	}
+
+	return c.JSON(fiber.Map{
+		"post_id": post.ID.Hex(),
+	})
+}
+
+func (h *PostHandler) PostFeed(c *fiber.Ctx) error {
+	userID := getUserIDFromContext(c)
+
+	var feed []primitive.M
+	var err error
+
+	if userID != primitive.NilObjectID {
+		feed, err = h.Posts.GetFeedWithUser(userID)
+	} else {
+		feed, err = h.Posts.GetFeed()
+	}
+
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to load feed"})
+	}
+
+	// Convert ObjectIDs to Hex strings for JSON response
+	for i := range feed {
+		if id, ok := feed[i]["id"].(primitive.ObjectID); ok {
+			feed[i]["id"] = id.Hex()
+		}
+	}
+
+	return c.JSON(feed)
+}
+
+// ---------- LIKE ----------
+func (h *PostHandler) LikePost(c *fiber.Ctx) error {
+	userID := getUserIDFromContext(c)
+	postIDStr := c.Query("post_id")
+
+	postID, err := primitive.ObjectIDFromHex(postIDStr)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid post_id"})
+	}
+
+	if err := h.Posts.Like(postID, userID); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to like post"})
+	}
+
+	return c.SendStatus(fiber.StatusOK)
+}
+
+func (h *PostHandler) UnlikePost(c *fiber.Ctx) error {
+	userID := getUserIDFromContext(c)
+	postIDStr := c.Query("post_id")
+
+	postID, err := primitive.ObjectIDFromHex(postIDStr)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid post_id"})
+	}
+
+	if err := h.Posts.Unlike(postID, userID); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to unlike post"})
+	}
+
+	return c.SendStatus(fiber.StatusOK)
+}
+
+// ---------- COMMENT ----------
+func (h *PostHandler) AddComment(c *fiber.Ctx) error {
+	userID := getUserIDFromContext(c)
+
+	var req struct {
+		PostID  string `json:"post_id"`
+		Content string `json:"content"`
+	}
+
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid request body"})
+	}
+
+	postID, err := primitive.ObjectIDFromHex(req.PostID)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid post_id"})
+	}
+
+	comment := models.PostComment{
+		PostID:  postID,
+		UserID:  userID,
+		Content: req.Content,
+	}
+
+	if err := h.Posts.AddComment(&comment); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to add comment"})
+	}
+
+	// ⭐ ดึง comment แบบมี user info กลับมา
+	commentWithUser, err := h.Posts.GetCommentWithUser(comment.ID)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to get comment details"})
+	}
+
+	return c.Status(fiber.StatusCreated).JSON(commentWithUser)
+}
+
+func (h *PostHandler) GetComments(c *fiber.Ctx) error {
+	postIDStr := c.Query("post_id")
+
+	postID, err := primitive.ObjectIDFromHex(postIDStr)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid post_id"})
+	}
+
+	comments, err := h.Posts.GetComments(postID)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to get comments"})
+	}
+
+	return c.JSON(comments)
+}
+
+// ---------- SHARE ----------
+func (h *PostHandler) SharePost(c *fiber.Ctx) error {
+	userID := getUserIDFromContext(c)
+	postIDStr := c.Query("post_id")
+
+	postID, err := primitive.ObjectIDFromHex(postIDStr)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid post_id"})
+	}
+
+	success, err := h.Posts.Share(postID, userID)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to share"})
+	}
+
+	message := "already shared"
+	if success {
+		message = "shared"
+	}
+
+	return c.JSON(fiber.Map{
+		"success": success,
+		"message": message,
+	})
+}
+
+// ---------- DELETE POST ----------
+func (h *PostHandler) DeletePost(c *fiber.Ctx) error {
+	userID := getUserIDFromContext(c)
+	postIDStr := c.Query("post_id")
+
+	postID, err := primitive.ObjectIDFromHex(postIDStr)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid post_id"})
+	}
+
+	if err := h.Posts.DeletePost(postID, userID); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "delete failed"})
+	}
+
+	return c.SendStatus(fiber.StatusOK)
+}
+
+func (h *PostHandler) PostDetail(c *fiber.Ctx) error {
+	postIDStr := c.Query("post_id")
+	if postIDStr == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "missing post_id"})
+	}
+
+	postID, err := primitive.ObjectIDFromHex(postIDStr)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid post_id"})
+	}
+
+	post, err := h.Posts.GetPostDetail(postID)
+	if err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "post not found"})
+	}
+
+	// Convert ObjectID to Hex string for JSON response
+	if id, ok := post["id"].(primitive.ObjectID); ok {
+		post["id"] = id.Hex()
+	}
+
+	imagesData, _ := h.Posts.GetImages(postID)
+	commentsData, _ := h.Posts.GetComments(postID)
+
+	images := []map[string]interface{}{}
+	for _, img := range imagesData {
+		images = append(images, map[string]interface{}{
+			"url":   img.URL,
+			"order": img.Position,
+		})
+	}
+
+	comments := []models.CommentWithUser{}
+	if commentsData != nil {
+		comments = commentsData
+	}
+
+	resp := fiber.Map{
+		"post":     post,
+		"images":   images,
+		"comments": comments,
+	}
+
+	return c.JSON(resp)
+}
