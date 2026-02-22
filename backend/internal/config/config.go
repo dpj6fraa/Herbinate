@@ -19,7 +19,7 @@ func Load() *Config {
 	}
 
 	return &Config{
-		Port: getEnv("PORT", "8081"),
+		Port: getEnv("PORT", "8080"),
 	}
 }
 

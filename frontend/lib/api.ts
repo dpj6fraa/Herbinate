@@ -1,5 +1,5 @@
 const API_BASE =
-  process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8080";
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api";
 
 export async function apiFetch<T>(
   path: string,
@@ -30,9 +30,10 @@ export async function authFetch(
     throw new Error("Not authenticated");
   }
 
-  return fetch(url, {
+  return fetch(`${API_BASE}${url}`, {
     ...options,
     headers: {
+      "Content-Type": "application/json",
       ...(options.headers || {}),
       Authorization: `Bearer ${token}`,
     },

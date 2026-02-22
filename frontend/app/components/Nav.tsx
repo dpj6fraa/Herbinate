@@ -27,7 +27,7 @@ useEffect(() => {
     }
 
     try {
-      const res = await fetch("http://localhost:8080/me", {
+      const res = await fetch("http://localhost:8080/api/me", {
         headers: { Authorization: `Bearer ${token}` },
       });
 

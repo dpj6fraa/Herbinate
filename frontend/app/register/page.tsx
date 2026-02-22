@@ -23,7 +23,7 @@ async function register() {
   if (!accepted) return setError("กรุณายอมรับเงื่อนไขการใช้งาน");
 
   try {
-    const res = await fetch("http://localhost:8080/auth/register", {
+    const res = await fetch("http://localhost:8080/api/auth/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -33,15 +33,21 @@ async function register() {
       }),
     });
 
-    if (!res.ok) {
-      const msg = await res.text();
-      setError(msg || "สมัครไม่สำเร็จ");
+    const data = await res.json();
+
+    // ❌ สมัครซ้ำ และ verified แล้ว
+    if (res.status === 409) {
+      setError("อีเมลนี้ถูกใช้งานแล้ว");
       return;
     }
 
-    const data = await res.json(); // { email }
-    router.push(`/verify-email?email=${encodeURIComponent(data.email)}`)
+    if (!res.ok) {
+      setError(data.error || "สมัครไม่สำเร็จ");
+      return;
+    }
 
+    // ✅ สมัครใหม่ หรือ สมัครซ้ำแต่ยังไม่ verify
+    router.push(`/verify-email?email=${encodeURIComponent(email.trim())}`);
 
   } catch {
     setError("ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้");

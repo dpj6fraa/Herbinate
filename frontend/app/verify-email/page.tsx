@@ -21,7 +21,7 @@ export default function VerifyEmailPage() {
       return;
     }
 
-    const res = await fetch("http://localhost:8080/auth/verify-email", {
+    const res = await fetch("http://localhost:8080/api/auth/verify-email", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, otp }),
@@ -37,7 +37,7 @@ export default function VerifyEmailPage() {
   }
 
   async function resend() {
-    await fetch("http://localhost:8080/auth/resend-otp", {
+    await fetch("http://localhost:8080/api/auth/resend-otp", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email }),

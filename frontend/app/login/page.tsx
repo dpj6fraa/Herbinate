@@ -11,26 +11,39 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const router = useRouter();
 
-  async function login() {
-    setError("");
-  
-    const res = await fetch("http://localhost:8080/auth/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    });
-    
-    if (!res.ok) {
-      setError("อีเมล์หรือรหัสผ่านไม่ถูกต้อง");
-      return;
-    }
-  
-    const data = await res.json();
-    localStorage.setItem("token", data.token);
-  
-    // ✅ Redirect ไปหน้า Homepage
-    window.location.href = "/homepage";
+async function login() {
+  setError("");
+
+  const res = await fetch("http://localhost:8080/api/auth/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password }),
+  });
+
+  const data = await res.json();
+
+  // ❌ Email/Password ผิด
+  if (res.status === 401) {
+    setError("อีเมล์หรือรหัสผ่านไม่ถูกต้อง");
+    return;
   }
+
+  // ⚠️ ยังไม่ Verify → พาไปหน้า OTP
+  if (res.status === 403) {
+    router.push(`/verify-email?email=${email}`);
+    return;
+  }
+
+  if (!res.ok) {
+    setError(data.error || "เกิดข้อผิดพลาดบางอย่าง");
+    return;
+  }
+
+  // ✅ Login สำเร็จ
+  localStorage.setItem("token", data.token);
+  window.location.href = "/homepage";
+}
+
   return (
     <div className="min-h-svh bg-white flex flex-col">
       {/* Content Area */}

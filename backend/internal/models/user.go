@@ -12,8 +12,8 @@ type User struct {
 	Username        string             `json:"username" bson:"username"`
 	Password        string             `json:"password,omitempty" bson:"-"`
 	PasswordHash    string             `json:"-" bson:"passwordhash"`
-	IsVerified      bool               `json:"is_verified" bson:"isverified"`
-	ProfileImageURL string             `json:"profile_image_url" bson:"profileimageurl"`
+	IsVerified      bool               `json:"is_verified" bson:"is_verified"`
+	ProfileImageURL string             `json:"profile_image_url" bson:"profile_image_url"`
 	CreatedAt       time.Time          `json:"created_at" bson:"created_at"`
 	UpdatedAt       time.Time          `json:"updated_at" bson:"updated_at"`
 }

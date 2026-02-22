@@ -32,8 +32,8 @@ func SetupRoutes(app *fiber.App) {
 	auth.Post("/register", handlers.Register)
 	auth.Post("/login", handlers.Login)
 	// TODO: Implement VerifyEmail and ResendOTP in auth_handler.go
-	// auth.Post("/verify-email", handlers.VerifyEmail)
-	// auth.Post("/resend-otp", handlers.ResendOTP)
+	auth.Post("/verify-email", handlers.VerifyEmail)
+	auth.Post("/resend-otp", handlers.ResendOTP)
 
 	// User routes
 	users := api.Group("/users")

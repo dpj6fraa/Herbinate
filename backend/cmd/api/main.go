@@ -32,4 +32,6 @@ func main() {
 	// Start server
 	log.Printf("Server is running on port %s", cfg.Port)
 	log.Fatal(app.Listen(":" + cfg.Port))
+
+	app.Static("/uploads", "./uploads")
 }
