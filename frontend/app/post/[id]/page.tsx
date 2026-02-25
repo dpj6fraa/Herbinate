@@ -41,7 +41,7 @@ export default function PostDetailPage() {
 
 
   useEffect(() => {
-    fetch(`http://localhost:8080/posts/detail?post_id=${id}`)
+    fetch(`http://localhost:8080/api/posts/detail?post_id=${id}`)
       .then((res) => res.json())
       .then((d) => setData(d))
       .finally(() => setLoading(false));
@@ -62,7 +62,7 @@ export default function PostDetailPage() {
   try {
     setSending(true);
 
-    const res = await fetch("http://localhost:8080/posts/comment", {
+    const res = await fetch("http://localhost:8080/api/posts/comment", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

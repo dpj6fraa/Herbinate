@@ -68,7 +68,7 @@ export default function CreatePostPage() {
     try {
       setLoading(true);
 
-      const res = await fetch("http://localhost:8080/posts/create", {
+      const res = await fetch("http://localhost:8080/api/posts/create", {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,

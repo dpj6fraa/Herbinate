@@ -35,7 +35,7 @@ export default function ProfilePage() {
       return;
     }
 
-    fetch("http://localhost:8080/me", {
+    fetch("http://localhost:8080/api/me", {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -70,7 +70,7 @@ export default function ProfilePage() {
 
   const token = localStorage.getItem("token");
 
-  const res = await fetch("http://localhost:8080/users/profile-image", {
+  const res = await fetch("http://localhost:8080/api/users/profile-image", {
     method: "POST",
     headers: { Authorization: `Bearer ${token}` },
     body: formData,
@@ -87,7 +87,7 @@ async function saveUsername() {
   setSaving(true);
   const token = localStorage.getItem("token");
 
-  const res = await fetch("http://localhost:8080/users/username", {
+  const res = await fetch("http://localhost:8080/api/users/username", {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",

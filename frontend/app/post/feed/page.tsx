@@ -26,7 +26,7 @@ export default function FeedPage() {
 useEffect(() => {
   const token = localStorage.getItem("token");
   
-  fetch("http://localhost:8080/posts/feed", {
+  fetch("http://localhost:8080/api/posts/feed", {
     headers: token ? { Authorization: `Bearer ${token}` } : {},
   })
     .then((res) => res.json())
@@ -42,8 +42,8 @@ useEffect(() => {
   }
 
   const url = liked
-    ? `http://localhost:8080/posts/unlike?post_id=${postID}`
-    : `http://localhost:8080/posts/like?post_id=${postID}`;
+    ? `http://localhost:8080/api/posts/unlike?post_id=${postID}`
+    : `http://localhost:8080/api/posts/like?post_id=${postID}`;
 
   await fetch(url, {
     method: "POST",
@@ -71,7 +71,7 @@ async function sharePost(postID: string) {
     return;
   }
 
-  const response = await fetch(`http://localhost:8080/posts/share?post_id=${postID}`, {
+  const response = await fetch(`http://localhost:8080/api/posts/share?post_id=${postID}`, {
     method: "POST",
     headers: { Authorization: `Bearer ${token}` },
   });
