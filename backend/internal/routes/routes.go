@@ -62,4 +62,13 @@ func SetupRoutes(app *fiber.App) {
 	app.Put("/herbs/:id", handlers.UpdateHerb)
 	app.Delete("/herbs/:id", handlers.DeleteHerb)
 	app.Get("/herbs/search", handlers.SearchByTag)
+
+	// Articles
+	articles := app.Group("/articles")
+	articles.Get("/", handlers.GetAllArticles)
+	articles.Get("/search", handlers.SearchArticleByTag)
+	articles.Get("/:id", handlers.GetArticleByID)
+	articles.Post("/", middleware.AuthMiddleware(), handlers.CreateArticle)
+	articles.Put("/:id", middleware.AuthMiddleware(), handlers.UpdateArticle)
+	articles.Delete("/:id", middleware.AuthMiddleware(), handlers.DeleteArticle)
 }
