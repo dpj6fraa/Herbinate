@@ -56,10 +56,10 @@ func SetupRoutes(app *fiber.App) {
 	posts.Delete("/delete", middleware.AuthMiddleware(), postHandler.DeletePost)
 
 	// Herbs routes
-	herbs := api.Group("/herbs")
-	herbs.Get("/", handlers.GetAllHerbs)
-	herbs.Get("/:id", handlers.GetHerbByID)
-	herbs.Post("/", handlers.CreateHerb)
-	herbs.Put("/:id", handlers.UpdateHerb)
-	herbs.Delete("/:id", handlers.DeleteHerb)
+	app.Get("/herbs", handlers.GetAllHerbs)
+	app.Get("/herbs/:id", handlers.GetHerbByID)
+	app.Post("/herbs", handlers.CreateHerb)
+	app.Put("/herbs/:id", handlers.UpdateHerb)
+	app.Delete("/herbs/:id", handlers.DeleteHerb)
+	app.Get("/herbs/search", handlers.SearchByTag)
 }

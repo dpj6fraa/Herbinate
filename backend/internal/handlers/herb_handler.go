@@ -2,6 +2,8 @@ package handlers
 
 import (
 	"context"
+	"encoding/json"
+	"os"
 	"time"
 
 	"herb-api/internal/database"
@@ -60,22 +62,66 @@ func CreateHerb(c *fiber.Ctx) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	var herb models.Herb
-	if err := c.BodyParser(&herb); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+	// -------- TEXT FIELDS --------
+	name := c.FormValue("name")
+	scientific := c.FormValue("scientific_name")
+
+	// parse tags (JSON string)
+	var tags []string
+	if err := json.Unmarshal([]byte(c.FormValue("tags")), &tags); err != nil {
+		tags = []string{}
 	}
 
-	herb.CreatedAt = time.Now()
-	herb.UpdatedAt = herb.CreatedAt
+	// parse sections (JSON string)
+	var sections []models.HerbSection
+	if err := json.Unmarshal([]byte(c.FormValue("sections")), &sections); err != nil {
+		sections = []models.HerbSection{}
+	}
+
+	// -------- FILE UPLOAD --------
+	var imageURL string
+
+	file, err := c.FormFile("image")
+	if err == nil {
+		// สร้างโฟลเดอร์ถ้ายังไม่มี
+		os.MkdirAll("./uploads/herbs", os.ModePerm)
+
+		filename := primitive.NewObjectID().Hex() + "_" + file.Filename
+		path := "./uploads/herbs/" + filename
+
+		if err := c.SaveFile(file, path); err != nil {
+			return c.Status(500).JSON(fiber.Map{"error": "Failed to save image"})
+		}
+
+		imageURL = "/uploads/herbs/" + filename
+	}
+
+	now := time.Now()
+
+	// ใน CreateHerb หลัง parse sections เพิ่ม:
+	description := c.FormValue("description")
+
+	// และใน struct herb:
+	herb := models.Herb{
+		ID:          primitive.NewObjectID(),
+		Name:        name,
+		Scientific:  scientific,
+		Tags:        tags,
+		Sections:    sections,
+		Description: description, // ✅ เพิ่มตรงนี้
+		ImageURL:    imageURL,
+		CreatedAt:   now,
+		UpdatedAt:   now,
+	}
 
 	collection := database.GetCollection(collectionName)
-	result, err := collection.InsertOne(ctx, herb)
+
+	_, err = collection.InsertOne(ctx, herb)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
 	}
 
-	herb.ID = result.InsertedID.(primitive.ObjectID)
-	return c.Status(fiber.StatusCreated).JSON(herb)
+	return c.Status(201).JSON(herb)
 }
 
 // UpdateHerb updates an existing herb
@@ -86,7 +132,7 @@ func UpdateHerb(c *fiber.Ctx) error {
 	idParam := c.Params("id")
 	objID, err := primitive.ObjectIDFromHex(idParam)
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid ID format"})
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid ID"})
 	}
 
 	var updateData models.Herb
@@ -98,7 +144,8 @@ func UpdateHerb(c *fiber.Ctx) error {
 		"$set": bson.M{
 			"name":            updateData.Name,
 			"scientific_name": updateData.Scientific,
-			"properties":      updateData.Properties,
+			"tags":            updateData.Tags,
+			"sections":        updateData.Sections,
 			"description":     updateData.Description,
 			"image_url":       updateData.ImageURL,
 			"updated_at":      time.Now(),
@@ -115,7 +162,7 @@ func UpdateHerb(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Herb not found"})
 	}
 
-	return c.JSON(fiber.Map{"message": "Herb updated successfully"})
+	return c.JSON(fiber.Map{"message": "Updated successfully"})
 }
 
 // DeleteHerb removes a herb from the database
@@ -140,4 +187,25 @@ func DeleteHerb(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(fiber.Map{"message": "Herb deleted successfully"})
+}
+
+func SearchByTag(c *fiber.Ctx) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	tag := c.Query("tag")
+
+	collection := database.GetCollection(collectionName)
+	cursor, err := collection.Find(ctx, bson.M{
+		"tags": bson.M{"$in": []string{tag}},
+	})
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+	}
+	defer cursor.Close(ctx)
+
+	var herbs []models.Herb
+	cursor.All(ctx, &herbs)
+
+	return c.JSON(herbs)
 }
