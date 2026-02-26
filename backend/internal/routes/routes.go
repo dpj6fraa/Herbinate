@@ -71,4 +71,14 @@ func SetupRoutes(app *fiber.App) {
 	articles.Post("/", middleware.AuthMiddleware(), handlers.CreateArticle)
 	articles.Put("/:id", middleware.AuthMiddleware(), handlers.UpdateArticle)
 	articles.Delete("/:id", middleware.AuthMiddleware(), handlers.DeleteArticle)
+
+	// User route — ต้อง login
+	app.Post("/reports", middleware.AuthMiddleware(), handlers.CreateReport)
+
+	// Admin routes — ต้อง login + เป็น admin
+	// (ปรับ middleware.AdminRequired ตามระบบ Auth ที่มี)
+	admin := app.Group("/admin", middleware.AuthMiddleware() /*, middleware.AdminRequired */)
+	admin.Get("/reports", handlers.GetReports)
+	admin.Get("/reports/:id", handlers.GetReportByID)
+	admin.Patch("/reports/:id", handlers.UpdateReportStatus)
 }

@@ -1,11 +1,18 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter, useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
+import Nav from "../../components/Nav";
+import Footer from "../../components/Footer";
+import ArticleReportModal from "../../components/ArticlereportModal.tsx";
 
 const API = "http://localhost:8080";
 
-type Section = { title: string; content: string; position: number };
+type Section = {
+  title: string;
+  content: string;
+  position: number;
+};
 
 type Article = {
   id: string;
@@ -17,30 +24,57 @@ type Article = {
 };
 
 export default function ArticleDetailPage() {
-  const router = useRouter();
   const params = useParams();
+  const router = useRouter();
   const [article, setArticle] = useState<Article | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [isReportOpen, setIsReportOpen] = useState(false);
 
   useEffect(() => {
     fetch(`${API}/articles/${params.id}`)
-      .then((res) => res.json())
-      .then(setArticle);
+      .then((res) => {
+        if (!res.ok) throw new Error("Not found");
+        return res.json();
+      })
+      .then((data) => {
+        setArticle(data);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
   }, [params.id]);
 
-  async function handleDelete() {
-    const token = localStorage.getItem("token");
-    if (!token) { alert("Login ก่อน"); return; }
-
-    const res = await fetch(`${API}/articles/${params.id}`, {
-      method: "DELETE",
-      headers: { Authorization: `Bearer ${token}` },
-    });
-
-    if (res.ok) router.push("/articles");
-    else alert("ลบไม่สำเร็จ");
+  if (loading) {
+    return (
+      <main className="min-h-svh bg-white flex flex-col">
+        <Nav />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="flex flex-col items-center gap-3">
+            <div className="w-8 h-8 border-[3px] border-blue-400 border-t-transparent rounded-full animate-spin" />
+            <p className="text-gray-400 text-sm">กำลังโหลด...</p>
+          </div>
+        </div>
+        <Footer />
+      </main>
+    );
   }
 
-  if (!article) return <div className="p-6">Loading...</div>;
+  if (!article) {
+    return (
+      <main className="min-h-svh bg-white flex flex-col">
+        <Nav />
+        <div className="flex-1 flex items-center justify-center flex-col gap-4">
+          <p className="text-gray-500">ไม่พบบทความ</p>
+          <button
+            onClick={() => router.push("/articles")}
+            className="text-sm text-blue-600 underline"
+          >
+            กลับหน้ารายการ
+          </button>
+        </div>
+        <Footer />
+      </main>
+    );
+  }
 
   const imageURL = article.image_url ? `${API}${article.image_url}` : null;
   const sortedSections = [...(article.sections ?? [])].sort(
@@ -48,49 +82,114 @@ export default function ArticleDetailPage() {
   );
 
   return (
-    <div className="max-w-2xl mx-auto p-6 space-y-6">
-      {imageURL && (
-        <img src={imageURL} alt={article.title}
-          className="w-full h-64 object-cover rounded" />
-      )}
+    <main className="min-h-svh bg-white flex flex-col">
+      <Nav />
 
-      <div>
-        <h1 className="text-2xl font-bold">{article.title}</h1>
-      </div>
+      <div className="flex-1 flex flex-col pt-4 lg:items-center">
+        <div className="max-w-2xl mx-auto bg-white min-h-screen pb-10">
 
-      {article.description && (
-        <p className="text-gray-600 leading-relaxed">{article.description}</p>
-      )}
-
-      <div className="flex gap-2 flex-wrap">
-        {article.tags?.map((t, i) => (
-          <span key={i} className="text-xs bg-blue-100 px-2 py-1 rounded">{t}</span>
-        ))}
-      </div>
-
-      <div className="space-y-4">
-        {sortedSections.map((sec, i) => (
-          <div key={i}>
-            <h2 className="font-semibold text-lg mb-1">{sec.title}</h2>
-            <p className="text-gray-700 whitespace-pre-line">{sec.content}</p>
+          {/* รูปภาพ */}
+          <div className="w-full aspect-video overflow-hidden rounded-xl shadow-lg bg-gray-100">
+            {imageURL ? (
+              <img
+                src={imageURL}
+                alt={article.title}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-gray-300">
+                <svg className="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+                    d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
+                </svg>
+              </div>
+            )}
           </div>
-        ))}
+
+          {/* ชื่อ + ปุ่ม Report */}
+          <div className="px-6 pt-6 flex justify-between items-start">
+            <div className="flex-1 pr-4">
+              <h1 className="text-2xl font-bold text-gray-800 leading-snug">
+                {article.title}
+              </h1>
+            </div>
+
+            <button
+              onClick={() => setIsReportOpen(true)}
+              title="รายงานบทความ"
+              className="p-2 rounded-full hover:bg-red-50 transition-colors cursor-pointer flex-shrink-0"
+            >
+              <svg
+                className="w-6 h-6 text-red-400"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2}
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 3v18" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 5h13l-4 4 4 4H3" />
+              </svg>
+            </button>
+          </div>
+
+          {/* Tags */}
+          {article.tags && article.tags.length > 0 && (
+            <div className="px-6 mt-4">
+              <div className="flex flex-wrap gap-2">
+                {article.tags.map((tag, i) => (
+                  <span
+                    key={i}
+                    className="bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 rounded-md text-sm font-medium"
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Content */}
+          <div className="px-6 mt-4 space-y-6">
+
+            {/* Description เป็น lead paragraph */}
+            {article.description && (
+              <p className="text-gray-600 text-base leading-relaxed border-l-4 border-blue-200 pl-4">
+                {article.description}
+              </p>
+            )}
+
+            {sortedSections.map((sec, i) => (
+              <section
+                key={i}
+                className="bg-blue-50/30 p-4 rounded-xl border border-gray-100 shadow-2xl"
+              >
+                {sec.title && (
+                  <h3 className="font-bold text-gray-800 mb-2 border-l-4 border-blue-200 pl-2">
+                    {sec.title}
+                  </h3>
+                )}
+                <p className="text-gray-600 text-sm leading-relaxed whitespace-pre-line">
+                  {sec.content}
+                </p>
+              </section>
+            ))}
+          </div>
+
+          {/* ⚠️ TODO: Edit/Delete — รอระบบ Role/Auth */}
+          {/* <div className="px-6 mt-8 flex gap-3">
+            <button onClick={() => router.push(`/articles/${params.id}/edit`)}>แก้ไข</button>
+          </div> */}
+
+        </div>
       </div>
 
-      <div className="flex gap-3">
-        <button
-          onClick={() => router.push(`/articles/${params.id}/edit`)}
-          className="flex-1 bg-yellow-500 text-white py-2 rounded"
-        >
-          Edit
-        </button>
-        <button
-          onClick={handleDelete}
-          className="flex-1 bg-red-600 text-white py-2 rounded"
-        >
-          Delete
-        </button>
-      </div>
-    </div>
+      <Footer />
+
+      <ArticleReportModal
+        isOpen={isReportOpen}
+        onClose={() => setIsReportOpen(false)}
+        articleTitle={article.title}
+      />
+    </main>
   );
 }
