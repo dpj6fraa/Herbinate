@@ -39,17 +39,29 @@ func Register(c *fiber.Ctx) error {
 	collection := database.GetCollection(userCollection)
 	otpRepo := repository.NewOTPRepository()
 
+	// 🌟🌟🌟 1. เพิ่มการเช็ค Username ซ้ำตรงนี้ 🌟🌟🌟
+	var existingUsername models.User
+	errUser := collection.FindOne(ctx, bson.M{"username": input.Username}).Decode(&existingUsername)
+
+	// ถ้าหา Username นี้เจอในฐานข้อมูล และอีเมลของคนที่ใช้ชื่อนี้อยู่ "ไม่ใช่" อีเมลที่กำลังส่งเข้ามา
+	if errUser == nil && existingUsername.Email != input.Email {
+		return c.Status(fiber.StatusConflict).JSON(fiber.Map{
+			"error": "ชื่อผู้ใช้นี้ถูกใช้งานแล้ว",
+		})
+	}
+	// 🌟🌟🌟 สิ้นสุดส่วนที่เพิ่มใหม่ 🌟🌟🌟
+
 	var existing models.User
 	err := collection.FindOne(ctx, bson.M{"email": input.Email}).Decode(&existing)
 
 	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(input.Password), bcrypt.DefaultCost)
 
-	// 📌 ถ้ามี user อยู่แล้ว
+	// 📌 ถ้ามี user (อีเมลนี้) อยู่แล้ว
 	if err == nil {
 
 		if existing.IsVerified {
 			return c.Status(fiber.StatusConflict).JSON(fiber.Map{
-				"error": "Email already registered",
+				"error": "อีเมลนี้ถูกใช้งานแล้ว", // ปรับข้อความเป็นภาษาไทยให้เข้ากับหน้าเว็บ
 			})
 		}
 
@@ -67,7 +79,7 @@ func Register(c *fiber.Ctx) error {
 		code := generateOTP()
 		_ = otpRepo.SaveOTP(input.Email, code, 5*time.Minute)
 
-		// TODO: ส่ง email จริงตรงนี้
+		// ส่ง email จริงตรงนี้
 		emailService := service.NewEmailService()
 		if err := emailService.SendOTP(input.Email, code); err != nil {
 			fmt.Println("SMTP ERROR:", err)
@@ -81,7 +93,6 @@ func Register(c *fiber.Ctx) error {
 		})
 	}
 
-	// 📌 email ใหม่ → สร้าง user
 	// 📌 email ใหม่ → สร้าง user
 	user := models.User{
 		ID:           primitive.NewObjectID(),
@@ -226,4 +237,100 @@ func ResendOTP(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(fiber.Map{"message": "OTP resent"})
+}
+
+// ==========================================
+// Forgot Password Flow
+// ==========================================
+
+// ForgotPassword รับ email และส่ง OTP สำหรับตั้งรหัสใหม่
+func ForgotPassword(c *fiber.Ctx) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	type req struct {
+		Email string `json:"email"`
+	}
+
+	var body req
+	if err := c.BodyParser(&body); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request body"})
+	}
+
+	collection := database.GetCollection(userCollection)
+	otpRepo := repository.NewOTPRepository()
+
+	// 1. เช็คว่ามีผู้ใช้นี้ในระบบหรือไม่
+	var user models.User
+	err := collection.FindOne(ctx, bson.M{"email": body.Email}).Decode(&user)
+	if err != nil {
+		// ส่ง 404 กลับไปถ้าไม่พบอีเมล เพื่อความปลอดภัยหรือให้ผู้ใช้รู้ว่าพิมพ์ผิด
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "User with this email not found"})
+	}
+
+	// 2. สร้าง OTP ใหม่ และบันทึกลง Redis/DB
+	code := generateOTP()
+	_ = otpRepo.SaveOTP(user.Email, code, 10*time.Minute) // ให้เวลา 10 นาทีสำหรับรีเซ็ต
+
+	// 3. ส่งอีเมลพร้อม OTP
+	emailService := service.NewEmailService()
+	// เรียกใช้ฟังก์ชันที่เราเพิ่งสร้างไปใน EmailService
+	if err := emailService.SendPasswordResetOTP(user.Email, code); err != nil {
+		fmt.Println("SMTP ERROR:", err)
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to send reset OTP"})
+	}
+
+	return c.JSON(fiber.Map{
+		"message": "Password reset OTP sent successfully",
+		"email":   user.Email,
+	})
+}
+
+// ResetPassword รับ email, otp, newPassword เพื่อเปลี่ยนรหัสผ่านใน DB
+func ResetPassword(c *fiber.Ctx) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	type req struct {
+		Email       string `json:"email"`
+		OTP         string `json:"otp"`
+		NewPassword string `json:"newPassword"`
+	}
+
+	var body req
+	if err := c.BodyParser(&body); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request body"})
+	}
+
+	otpRepo := repository.NewOTPRepository()
+
+	// 1. ตรวจสอบว่า OTP ถูกต้องและยังไม่หมดอายุหรือไม่
+	ok, err := otpRepo.VerifyOTP(body.Email, body.OTP)
+	if !ok || err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid or expired OTP"})
+	}
+
+	// 2. Hash รหัสผ่านใหม่
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(body.NewPassword), bcrypt.DefaultCost)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to hash password"})
+	}
+
+	// 3. อัปเดตรหัสผ่านใหม่ลง Database
+	collection := database.GetCollection(userCollection)
+	update := bson.M{
+		"$set": bson.M{
+			"password_hash": string(hashedPassword),
+			"updated_at":    time.Now(),
+		},
+	}
+
+	result, err := collection.UpdateOne(ctx, bson.M{"email": body.Email}, update)
+	if err != nil || result.MatchedCount == 0 {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to update password"})
+	}
+
+	return c.JSON(fiber.Map{
+		"message": "Password reset successfully",
+	})
 }

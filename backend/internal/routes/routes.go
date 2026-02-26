@@ -35,6 +35,9 @@ func SetupRoutes(app *fiber.App) {
 	auth.Post("/verify-email", handlers.VerifyEmail)
 	auth.Post("/resend-otp", handlers.ResendOTP)
 
+	auth.Post("/forgot-password", handlers.ForgotPassword)
+	auth.Post("/reset-password", handlers.ResetPassword)
+
 	// User routes
 	users := api.Group("/users")
 	users.Put("/username", middleware.AuthMiddleware(), userHandler.UpdateUsername)

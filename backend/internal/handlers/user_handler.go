@@ -7,10 +7,13 @@ import (
 	"path/filepath"
 	"time"
 
+	"herb-api/internal/database"
 	"herb-api/internal/middleware"
+	"herb-api/internal/models"
 	"herb-api/internal/repository"
 
 	"github.com/gofiber/fiber/v2"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -113,9 +116,27 @@ func (h *UserHandler) UpdateUsername(c *fiber.Ctx) error {
 	}
 
 	if err := c.BodyParser(&body); err != nil || body.Username == "" {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid username"})
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "กรุณากรอกชื่อผู้ใช้"})
 	}
 
+	// 🌟🌟🌟 1. เพิ่มการเช็ค Username ซ้ำตรงนี้ 🌟🌟🌟
+	// ดึง Collection users มาใช้งาน (เช็ค import database, models, bson ด้วยนะครับ)
+	collection := database.GetCollection("users")
+	var existingUser models.User
+
+	// ค้นหาว่ามีชื่อ Username นี้อยู่ในระบบแล้วหรือไม่
+	err := collection.FindOne(c.Context(), bson.M{"username": body.Username}).Decode(&existingUser)
+
+	// ถ้าเจอข้อมูลแปลว่า "มีคนใช้ชื่อนี้แล้ว"
+	// และเช็คต่อว่า ID ของคนนั้น "ไม่ใช่" ID ของเราเอง (ป้องกันกรณีกดเซฟชื่อเดิมตัวเอง)
+	if err == nil && existingUser.ID != userID {
+		return c.Status(fiber.StatusConflict).JSON(fiber.Map{
+			"error": "ชื่อผู้ใช้นี้ถูกใช้งานแล้ว กรุณาเลือกชื่ออื่น",
+		})
+	}
+	// 🌟🌟🌟 สิ้นสุดส่วนที่เพิ่มใหม่ 🌟🌟🌟
+
+	// 2. ถ้าผ่านการเช็ค (ไม่มีคนใช้ หรือเป็นชื่อเดิมตัวเอง) ก็ให้อัปเดตตามปกติ
 	if err := h.Users.UpdateUsername(userID, body.Username); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to update"})
 	}

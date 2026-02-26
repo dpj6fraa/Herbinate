@@ -58,3 +58,39 @@ func (s *EmailService) SendOTP(toEmail, otp string) error {
 	addr := s.Host + ":" + s.Port
 	return smtp.SendMail(addr, auth, s.Username, []string{toEmail}, msg)
 }
+
+func (s *EmailService) SendPasswordResetOTP(toEmail, otp string) error {
+	auth := smtp.PlainAuth(
+		"",
+		s.Username,
+		s.Password,
+		s.Host,
+	)
+
+	subject := "คำขอรีเซ็ตรหัสผ่าน Herbinate (OTP)"
+	body := fmt.Sprintf(`
+สวัสดี 👋
+
+เราได้รับคำขอรีเซ็ตรหัสผ่านสำหรับบัญชีของคุณ
+รหัส OTP สำหรับตั้งรหัสผ่านใหม่คือ:
+
+%s
+
+รหัสนี้จะหมดอายุภายใน 10 นาที
+หากคุณไม่ได้เป็นผู้ร้องขอ กรุณาเพิกเฉยอีเมลฉบับนี้ บัญชีของคุณยังคงปลอดภัย
+
+— Herbinate
+`, otp)
+
+	msg := []byte(
+		"From: " + s.From + "\r\n" +
+			"To: " + toEmail + "\r\n" +
+			"Subject: " + subject + "\r\n" +
+			"MIME-Version: 1.0\r\n" +
+			"Content-Type: text/plain; charset=\"utf-8\"\r\n\r\n" +
+			body,
+	)
+
+	addr := s.Host + ":" + s.Port
+	return smtp.SendMail(addr, auth, s.Username, []string{toEmail}, msg)
+}
