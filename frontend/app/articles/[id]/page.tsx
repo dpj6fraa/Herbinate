@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Nav from "../../components/Nav";
 import Footer from "../../components/Footer";
-import ArticleReportModal from "../../components/ArticlereportModal.tsx";
+import ArticleReportModal from "../../components/ArticlereportModal";
 
 const API = "http://localhost:8080";
 
@@ -49,7 +49,8 @@ export default function ArticleDetailPage() {
         <Nav />
         <div className="flex-1 flex items-center justify-center">
           <div className="flex flex-col items-center gap-3">
-            <div className="w-8 h-8 border-[3px] border-blue-400 border-t-transparent rounded-full animate-spin" />
+            {/* ปรับสี Spinner เป็นสีเขียว */}
+            <div className="w-8 h-8 border-[3px] border-green-400 border-t-transparent rounded-full animate-spin" />
             <p className="text-gray-400 text-sm">กำลังโหลด...</p>
           </div>
         </div>
@@ -66,7 +67,7 @@ export default function ArticleDetailPage() {
           <p className="text-gray-500">ไม่พบบทความ</p>
           <button
             onClick={() => router.push("/articles")}
-            className="text-sm text-blue-600 underline"
+            className="text-sm text-green-600 underline" // ปรับเป็นสีเขียว
           >
             กลับหน้ารายการ
           </button>
@@ -132,14 +133,14 @@ export default function ArticleDetailPage() {
             </button>
           </div>
 
-          {/* Tags */}
+          {/* Tags - เปลี่ยนเป็นสไตล์สีเขียวเหมือนหน้า Herb */}
           {article.tags && article.tags.length > 0 && (
             <div className="px-6 mt-4">
               <div className="flex flex-wrap gap-2">
                 {article.tags.map((tag, i) => (
                   <span
                     key={i}
-                    className="bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 rounded-md text-sm font-medium"
+                    className="bg-[#D8F5D0] text-black border-2 border-[#A2F58B] px-1 py-0.5 rounded-md text-sm font-medium"
                   >
                     {tag}
                   </span>
@@ -149,11 +150,11 @@ export default function ArticleDetailPage() {
           )}
 
           {/* Content */}
-          <div className="px-6 mt-4 space-y-6">
+          <div className="px-6 mt-6 space-y-6">
 
-            {/* Description เป็น lead paragraph */}
+            {/* Description - ปรับ Border ให้เป็นสีเขียวอ่อน */}
             {article.description && (
-              <p className="text-gray-600 text-base leading-relaxed border-l-4 border-blue-200 pl-4">
+              <p className="text-gray-600 text-base leading-relaxed border-l-4 border-[#BAF8A8] pl-4">
                 {article.description}
               </p>
             )}
@@ -161,10 +162,10 @@ export default function ArticleDetailPage() {
             {sortedSections.map((sec, i) => (
               <section
                 key={i}
-                className="bg-blue-50/30 p-4 rounded-xl border border-gray-100 shadow-2xl"
+                className="bg-[#EEFFE5] p-4 rounded-xl border border-gray-100 shadow-lg" // ปรับสีพื้นหลังและ Shadow ให้เท่ากัน
               >
                 {sec.title && (
-                  <h3 className="font-bold text-gray-800 mb-2 border-l-4 border-blue-200 pl-2">
+                  <h3 className="font-bold text-gray-800 mb-2 border-l-4 border-[#BAF8A8] pl-2">
                     {sec.title}
                   </h3>
                 )}
@@ -175,11 +176,6 @@ export default function ArticleDetailPage() {
             ))}
           </div>
 
-          {/* ⚠️ TODO: Edit/Delete — รอระบบ Role/Auth */}
-          {/* <div className="px-6 mt-8 flex gap-3">
-            <button onClick={() => router.push(`/articles/${params.id}/edit`)}>แก้ไข</button>
-          </div> */}
-
         </div>
       </div>
 
@@ -188,6 +184,7 @@ export default function ArticleDetailPage() {
       <ArticleReportModal
         isOpen={isReportOpen}
         onClose={() => setIsReportOpen(false)}
+        articleId={article.id}    // <-- ส่ง id จริงจาก DB
         articleTitle={article.title}
       />
     </main>
