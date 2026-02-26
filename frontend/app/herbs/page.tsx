@@ -109,13 +109,13 @@ export default function HerbsPage() {
           
           {/* Header และปุ่ม Create */}
           <div className="flex justify-between items-center w-full">
-            <h1 className="text-[20px] md:text-[24px] text-black font-bold">🌿 สมุนไพรทั้งหมด</h1>
-            <button
+            <h1 className="text-[20px] md:text-[24px] text-black font-bold"> สมุนไพรทั้งหมด</h1>
+             {/*<button
               onClick={() => router.push("/herbs/create")}
               className="px-3 py-1.5 md:px-4 md:py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-xs md:text-sm transition-colors shadow-sm"
             >
               + เพิ่มสมุนไพร
-            </button>
+            </button>*/}
           </div>
 
           <div className="relative w-full mt-4">
