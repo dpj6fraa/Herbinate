@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -30,54 +30,225 @@ type Article = {
   tags: string[];
 };
 
+// 🌟 เพิ่ม Interface ของ Post สำหรับระบบ Search
+type Post = {
+  id: string;
+  title: string;
+  content: string;
+};
+
 // ==========================================
 // 2. Components ย่อย (Search, Tools)
 // ==========================================
 function SearchBar() {
+  const router = useRouter();
+  
+  // 🌟 States เก็บข้อมูลทั้งหมดสำหรับค้นหา
+  const [herbs, setHerbs] = useState<Herb[]>([]);
+  const [articles, setArticles] = useState<Article[]>([]);
+  const [posts, setPosts] = useState<Post[]>([]);
+  
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // โหลดข้อมูลมาเตรียมไว้ตอนเปิดหน้าเว็บ
+  useEffect(() => {
+    Promise.all([
+      fetch(`${API}/herbs`).then(res => res.ok ? res.json() : []),
+      fetch(`${API}/articles`).then(res => res.ok ? res.json() : []),
+      // 🌟🌟 แก้ URL ตรงนี้ให้ชี้ไปที่ /api/posts/feed ตาม routes.go ของคุณ
+      fetch(`${API}/api/posts/feed`).then(res => res.ok ? res.json() : []) 
+    ])
+    .then(([herbsData, articlesData, postsData]) => {
+      
+      setHerbs(Array.isArray(herbsData) ? herbsData : herbsData?.data || []);
+      setArticles(Array.isArray(articlesData) ? articlesData : articlesData?.data || []);
+      
+      // กันเหนียวเผื่อข้อมูล posts ถูกห่อมาในรูปแบบอื่น
+      let finalPosts = [];
+      if (Array.isArray(postsData)) {
+        finalPosts = postsData;
+      } else if (postsData && Array.isArray(postsData.data)) {
+        finalPosts = postsData.data;
+      }
+      setPosts(finalPosts);
+
+    })
+    .catch(err => console.error("Error fetching search data:", err));
+  }, []);
+
+  // ปิด Dropdown เมื่อคลิกที่อื่น
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // 🌟 ฟังก์ชันกรองข้อมูล และจำกัดจำนวนที่ 5 รายการ (Limit = 5)
+  const filteredHerbs = herbs.filter(h =>
+    h.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    h.scientific_name?.toLowerCase().includes(searchQuery.toLowerCase())
+  ).slice(0, 5); 
+
+  const filteredArticles = articles.filter(a =>
+    a.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    a.description?.toLowerCase().includes(searchQuery.toLowerCase())
+  ).slice(0, 5);
+
+  const filteredPosts = posts.filter(p =>
+    p.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    p.content?.toLowerCase().includes(searchQuery.toLowerCase())
+  ).slice(0, 5);
+
+  const highlightText = (text: string, highlight: string) => {
+    if (!highlight.trim() || !text) return text;
+    const regex = new RegExp(`(${highlight})`, "gi");
+    const parts = text.split(regex);
+    return parts.map((part, i) =>
+      regex.test(part) ? <span key={i} className="text-[#1C7D29] font-bold">{part}</span> : part
+    );
+  };
+
+  const hasResults = filteredHerbs.length > 0 || filteredArticles.length > 0 || filteredPosts.length > 0;
+
   return (
     <div>
-      <div className="relative w-full flex flex-col items-center justify-center text-white overflow-hidden h-64 sm:h-75 md:h-60">
-        <Image
-          src="/images/herbs.webp"
-          alt="Herbinate Background"
-          fill
-          className="object-cover brightness-50"
-        />
+      <div className="relative w-full h-64 sm:h-75 md:h-60">
+        <div className="absolute inset-0 z-0 overflow-hidden bg-black">
+          <Image
+            src="/images/herbs.webp"
+            alt="Herbinate Background"
+            fill
+            className="object-cover opacity-60" 
+          />
+        </div>
 
-        <div className="text-center w-full h-full flex flex-col justify-center items-center bg-[rgba(255,255,255,0.3)] z-40 px-4">
-          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold mb-2 leading-tight">
+        <div className="relative z-40 w-full h-full flex flex-col justify-center items-center px-4">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold mb-2 leading-tight text-white shadow-sm">
             &quot;สมุนไพร... เรื่องง่ายสำหรับทุกคน&quot;
           </h1>
-          <h2 className="text-xs sm:text-sm md:text-lg text-[rgba(255,255,255,0.9)] leading-relaxed">
+          <h2 className="text-xs sm:text-sm md:text-lg text-white/90 leading-relaxed shadow-sm">
             แหล่งความรู้และผลิตภัณฑ์สมุนไพร
           </h2>
-          <h2 className="text-xs sm:text-sm md:text-lg mb-4 text-[rgba(255,255,255,0.9)] leading-relaxed">
+          <h2 className="text-xs sm:text-sm md:text-lg mb-4 text-white/90 leading-relaxed shadow-sm">
             ที่ช่วยให้คุณเลือกใช้ได้อย่างมั่นใจ
           </h2>
 
-          <div className="relative w-full max-w-md mx-auto px-4">
-            <input
-              type="text"
-              placeholder="ค้นหาสมุนไพร..."
-              className="w-full py-2 px-6 rounded-full text-sm text-black bg-white/90 focus:outline-none shadow-lg"
-            />
-            <span className="absolute right-8 top-1/2 -translate-y-1/2 text-gray-400">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="text-black cursor-pointer"
-              >
-                <circle cx="11" cy="11" r="8"></circle>
-                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-              </svg>
-            </span>
+          <div className="relative w-full max-w-md mx-auto px-4" ref={dropdownRef}>
+            <div className="relative">
+              <input
+                type="text"
+                value={searchQuery}
+                onFocus={() => setIsOpen(true)}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setIsOpen(true);
+                }}
+                placeholder="ค้นหาสมุนไพร, บทความ, กระทู้..."
+                className="w-full py-3 px-6 rounded-full text-sm text-black bg-white focus:outline-none focus:ring-4 focus:ring-[#71CE61]/50 shadow-xl transition-all"
+              />
+              
+              {searchQuery ? (
+                <button 
+                  onClick={() => { setSearchQuery(""); setIsOpen(false); }}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 transition-colors p-1"
+                >
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+              ) : (
+                <span className="absolute right-5 top-1/2 -translate-y-1/2 text-gray-400">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                  </svg>
+                </span>
+              )}
+            </div>
+
+            {isOpen && searchQuery.length > 0 && (
+              <div className="absolute top-[115%] left-4 right-4 bg-white rounded-xl shadow-2xl overflow-hidden z-50 text-left border border-gray-100 flex flex-col max-h-[60vh] animate-in slide-in-from-top-2 duration-200">
+                <div className="overflow-y-auto scrollbar-hide">
+                  {hasResults ? (
+                    <>
+                      {/* หมวดสมุนไพร */}
+                      {filteredHerbs.length > 0 && (
+                        <div className="border-b border-gray-100 last:border-0">
+                          <div className="px-4 py-2 bg-green-50/50 text-xs font-bold text-[#1C7D29] flex items-center gap-1.5">
+                            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 22C12 22 20 18 20 12V5L12 2L4 5V12C4 18 12 22 12 22Z"></path></svg>
+                            สมุนไพร
+                          </div>
+                          {filteredHerbs.map((herb) => (
+                            <div
+                              key={herb.id}
+                              onClick={() => router.push(`/herbs/${herb.id}`)}
+                              className="px-5 py-3 hover:bg-gray-50 cursor-pointer transition-colors flex flex-col"
+                            >
+                              <span className="text-sm text-gray-800 font-medium line-clamp-1">{highlightText(herb.name, searchQuery)}</span>
+                              {herb.scientific_name && <span className="text-[11px] text-gray-400 italic line-clamp-1">{highlightText(herb.scientific_name, searchQuery)}</span>}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* หมวดบทความ */}
+                      {filteredArticles.length > 0 && (
+                        <div className="border-b border-gray-100 last:border-0">
+                          <div className="px-4 py-2 bg-blue-50/50 text-xs font-bold text-blue-700 flex items-center gap-1.5">
+                            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+                            บทความ
+                          </div>
+                          {filteredArticles.map((article) => (
+                            <div
+                              key={article.id}
+                              onClick={() => router.push(`/articles/${article.id}`)}
+                              className="px-5 py-3 hover:bg-gray-50 cursor-pointer transition-colors flex flex-col"
+                            >
+                              <span className="text-sm text-gray-800 font-medium line-clamp-1">{highlightText(article.title, searchQuery)}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* หมวดชุมชน */}
+                      {filteredPosts.length > 0 && (
+                        <div className="border-b border-gray-100 last:border-0">
+                          <div className="px-4 py-2 bg-orange-50/50 text-xs font-bold text-orange-700 flex items-center gap-1.5">
+                            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                            ชุมชน
+                          </div>
+                          {filteredPosts.map((post) => (
+                            <div
+                              key={post.id}
+                              // 🌟 ไปที่หน้า /post/[id]
+                              onClick={() => router.push(`/post/${post.id}`)} 
+                              className="px-5 py-3 hover:bg-gray-50 cursor-pointer transition-colors flex flex-col"
+                            >
+                              <span className="text-sm text-gray-800 font-medium line-clamp-1">{highlightText(post.title, searchQuery)}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <div className="px-4 py-8 text-center flex flex-col items-center justify-center">
+                      <svg className="w-10 h-10 text-gray-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                      <p className="text-sm text-gray-500 font-medium">ไม่พบผลลัพธ์สำหรับ &quot;<span className="text-gray-800">{searchQuery}</span>&quot;</p>
+                    </div>
+                  )}
+                </div>
+                
+                {hasResults && (
+                  <div className="bg-gray-50 p-2 text-center text-[10px] text-gray-400 border-t border-gray-100">
+                    เลือกผลลัพธ์ที่ต้องการเพื่อดูรายละเอียด
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -170,7 +341,7 @@ function Tools() {
 }
 
 // ==========================================
-// 3. Components แสดงผลข้อมูล (ดึงจาก API)
+// 3. Components แสดงผลข้อมูล
 // ==========================================
 function PopularHerbs({ data }: { data: Herb[] }) {
   const router = useRouter();
@@ -182,7 +353,6 @@ function PopularHerbs({ data }: { data: Herb[] }) {
               <h2 className="text-sm font-medium text-gray-800">
                 สมุนไพรยอดนิยม
               </h2>
-              {/* 🌟 เปลี่ยนเป็นปุ่ม "ดูทั้งหมด" ที่สื่อความหมายชัดเจน */}
               <button 
                 onClick={() => router.push('/herbs')} 
                 className="group flex items-center gap-1 text-[11px] sm:text-xs font-medium text-green-600 hover:text-green-700 bg-green-50 hover:bg-green-100 px-3 py-1.5 rounded-full transition-all duration-200"
@@ -206,14 +376,12 @@ function PopularHerbs({ data }: { data: Herb[] }) {
                 const imgSource = item.image_url ? `${API}${item.image_url}` : "/placeholder.png";
 
                 return (
-                  // 🌟 ปรับขนาดเป็น w-40 (160px) ให้เท่ากัน
                   <div 
                     key={item.id} 
                     onClick={() => router.push(`/herbs/${item.id}`)} 
                     className="shrink-0 w-40 snap-start group cursor-pointer h-full"
                   >
                     <div className="flex flex-col bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300 h-full">
-                      {/* 🌟 ปรับความสูงรูปเป็น h-28 ให้เท่ากัน */}
                       <div className="w-full h-28 rounded-t-xl overflow-hidden bg-gray-100 flex items-center justify-center shrink-0">
                         <img
                           src={imgSource}
@@ -221,7 +389,6 @@ function PopularHerbs({ data }: { data: Herb[] }) {
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                         />
                       </div>
-                      {/* 🌟 ปรับ Padding และโครงสร้างให้ข้อความเรียงตัวเท่ากัน */}
                       <div className="p-3 flex flex-col gap-1.5 flex-1">
                         <h3 className="text-xs font-bold text-gray-800 line-clamp-1">
                           {item.name}
@@ -255,7 +422,6 @@ function HerbsNews({ data }: { data: Article[] }) {
               <h2 className="text-sm font-medium text-gray-800">
                 บทความและเกร็ดความรู้
               </h2>
-              {/* 🌟 เปลี่ยนเป็นปุ่ม "ดูทั้งหมด" */}
               <button 
                 onClick={() => router.push('/articles')} 
                 className="group flex items-center gap-1 text-[11px] sm:text-xs font-medium text-green-600 hover:text-green-700 bg-green-50 hover:bg-green-100 px-3 py-1.5 rounded-full transition-all duration-200"
@@ -279,14 +445,12 @@ function HerbsNews({ data }: { data: Article[] }) {
                 const imgSource = item.image_url ? `${API}${item.image_url}` : "/placeholder.png";
 
                 return (
-                  // 🌟 ปรับขนาดเป็น w-40 ให้เท่ากัน
                   <div 
                     key={item.id} 
                     onClick={() => router.push(`/articles/${item.id}`)}
                     className="shrink-0 w-40 snap-start group cursor-pointer h-full"
                   >
                     <div className="flex flex-col bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300 h-full">
-                      {/* 🌟 ปรับความสูงรูปเป็น h-28 ให้เท่ากัน */}
                       <div className="w-full h-28 rounded-t-xl overflow-hidden bg-gray-100 flex items-center justify-center shrink-0">
                         <img
                           src={imgSource}
@@ -294,7 +458,6 @@ function HerbsNews({ data }: { data: Article[] }) {
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                         />
                       </div>
-                      {/* 🌟 ปรับ Padding และโครงสร้างให้ข้อความเรียงตัวเท่ากัน */}
                       <div className="p-3 flex flex-col gap-1.5 flex-1">
                         <h3 className="text-xs font-bold text-gray-800 line-clamp-1">
                           {item.title}
@@ -324,13 +487,11 @@ function HomeContent() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // ยิง API ดึงข้อมูลทั้ง 2 อย่างพร้อมกัน
     Promise.all([
       fetch(`${API}/herbs`).then(res => res.json()),
       fetch(`${API}/articles`).then(res => res.json())
     ])
     .then(([herbsData, articlesData]) => {
-      // ตัดมาแสดงบนหน้า Home แค่ 10 อันแรก (กันยาวเกิน)
       setHerbs(herbsData.slice(0, 10));
       setArticles(articlesData.slice(0, 10));
       setLoading(false);
