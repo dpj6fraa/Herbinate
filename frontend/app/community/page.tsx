@@ -145,13 +145,15 @@ export default function CommunityPage() {
 
             {/* Footer Options */}
             <div className="border-t border-gray-100 bg-white px-5 py-3 flex items-center justify-between">
-                <div className="flex items-center gap-2 cursor-pointer">
-                    <Heart className="w-[18px] h-[18px] text-gray-400 fill-gray-400" />
-                    <span className="text-green-600 font-bold text-sm">{post.likes}</span>
-                </div>
-                <div className="flex items-center gap-2 cursor-pointer">
-                    <MessageCircle className="w-[18px] h-[18px] text-gray-400 fill-gray-400" />
-                    <span className="text-green-600 font-bold text-sm">{post.commentsCount}</span>
+                <div className="flex items-center gap-8 md:gap-10">
+                    <div className="flex items-center gap-2 cursor-pointer">
+                        <Heart className="w-[18px] h-[18px] text-gray-400 fill-gray-400" />
+                        <span className="text-green-600 font-bold text-sm">{post.likes}</span>
+                    </div>
+                    <div className="flex items-center gap-2 cursor-pointer">
+                        <MessageCircle className="w-[18px] h-[18px] text-gray-400 fill-gray-400" />
+                        <span className="text-green-600 font-bold text-sm">{post.commentsCount}</span>
+                    </div>
                 </div>
                 <div className="flex items-center gap-2 cursor-pointer">
                     <Upload className="w-[18px] h-[18px] text-gray-400" />
