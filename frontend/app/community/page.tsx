@@ -162,69 +162,71 @@ export default function CommunityPage() {
     );
 
     return (
-        <div className="min-h-svh bg-[#FAFAFA] flex flex-col items-center">
-            {/* Make it mobile-container friendly */}
-            <div className="w-full max-w-md bg-white min-h-svh flex flex-col relative shadow-sm">
+        <div className="min-h-screen bg-white md:bg-[#FAFAFA] flex flex-col w-full relative">
 
-                {/* Main Nav */}
-                <div className={activePost ? 'hidden' : 'block'}>
-                    <Nav />
-                </div>
+            {/* Main Nav - Full width */}
+            <div className={`w-full sticky top-0 z-50 shadow-sm bg-white ${activePost ? 'hidden' : 'block'}`}>
+                <Nav />
+            </div>
 
-                {/* --- MAIN COMMUNITY LIST VIEW --- */}
-                {!activePost && (
-                    <main className="flex-1 flex flex-col pb-6 relative z-0">
-                        {/* Search and Filter */}
-                        <div className="flex px-4 py-4 gap-2 items-center">
-                            <div className="relative flex-1">
-                                <input
-                                    type="text"
-                                    placeholder="ค้นหาโพสต์"
-                                    className="w-full border border-gray-300 rounded-full pl-4 pr-10 py-1.5 text-sm text-gray-700 outline-none focus:border-gray-400"
-                                />
-                                <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-black w-4 h-4" />
-                            </div>
-                            <button className="border border-gray-300 rounded-full px-3 py-1.5 flex items-center gap-1.5 text-xs font-medium text-gray-700 whitespace-nowrap bg-white">
-                                <Filter className="w-[14px] h-[14px]" /> ทุกหมวดหมู่
-                            </button>
+            {/* --- MAIN COMMUNITY LIST VIEW --- */}
+            {!activePost && (
+                <main className="w-full max-w-md mx-auto bg-white flex-1 flex flex-col relative shadow-sm min-h-full pb-6 border-l border-r border-gray-100">
+                    {/* Search and Filter */}
+                    <div className="flex px-4 py-4 gap-2 items-center">
+                        <div className="relative flex-1">
+                            <input
+                                type="text"
+                                placeholder="ค้นหาโพสต์"
+                                className="w-full border border-gray-300 rounded-full pl-4 pr-10 py-1.5 text-sm text-gray-700 outline-none focus:border-gray-400"
+                            />
+                            <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-black w-4 h-4" />
                         </div>
-
-                        {/* Posts List */}
-                        <div className="flex-1 overflow-y-auto">
-                            {POSTS_DATA.map(renderPostCard)}
-                        </div>
-
-                        {/* FAB + Post */}
-                        <button
-                            onClick={() => setModalType("create")}
-                            className="absolute bottom-6 right-6 bg-[#27272A] text-white w-14 h-14 rounded-full flex items-center justify-center shadow-lg hover:scale-105 transition-transform"
-                        >
-                            <Plus className="w-8 h-8" />
+                        <button className="border border-gray-300 rounded-full px-3 py-1.5 flex items-center gap-1.5 text-xs font-medium text-gray-700 whitespace-nowrap bg-white">
+                            <Filter className="w-[14px] h-[14px]" /> ทุกหมวดหมู่
                         </button>
-                    </main>
-                )}
+                    </div>
 
-                {/* --- POST DETAIL VIEW --- */}
-                {activePost && (
-                    <div className="absolute inset-0 z-10 bg-[#f8fcf5] flex flex-col overflow-y-auto w-full h-full pb-10">
-                        {/* Detail Top Header */}
-                        <div className="sticky top-0 bg-[#f8fcf5] z-20">
-                            <Nav />
-                            <div className="px-4 pt-3 flex items-center justify-between pb-2">
-                                <button onClick={() => setActivePost(null)} className="p-1 -ml-1 text-black">
-                                    <ArrowLeft className="w-6 h-6" />
-                                </button>
-                                <div className="flex gap-4">
-                                    {!activePost.isMine ? (
-                                        <button onClick={() => setModalType("report")} className="text-red-500">
-                                            <Siren className="w-6 h-6" />
-                                        </button>
-                                    ) : (
-                                        <button onClick={() => setModalType("edit")} className="text-black">
-                                            <Edit className="w-6 h-6" />
-                                        </button>
-                                    )}
-                                </div>
+                    {/* Posts List */}
+                    <div className="flex-1 overflow-y-auto">
+                        {POSTS_DATA.map(renderPostCard)}
+                    </div>
+                </main>
+            )}
+
+            {/* FAB + Post (Sticky on window, NOT inside relative container) */}
+            {!activePost && (
+                <button
+                    onClick={() => setModalType("create")}
+                    className="fixed bottom-6 right-6 md:bottom-10 md:right-10 bg-[#27272A] text-white w-14 h-14 rounded-full flex items-center justify-center shadow-lg hover:scale-105 transition-transform z-50"
+                >
+                    <Plus className="w-8 h-8" />
+                </button>
+            )}
+
+            {/* --- POST DETAIL VIEW --- */}
+            {activePost && (
+                <div className="w-full flex-1 flex flex-col z-10 relative bg-white md:bg-[#FAFAFA]">
+                    {/* Full width Nav for Detail View */}
+                    <div className="sticky top-0 w-full bg-white z-50 shadow-sm border-b-2 border-b-[#97DB8B]">
+                        <Nav />
+                    </div>
+
+                    <div className="w-full max-w-md mx-auto flex flex-col relative pb-10 flex-1 bg-[#f8fcf5] shadow-sm border-l border-r border-[#e8f5e1]">
+                        <div className="sticky top-[72px] bg-[#f8fcf5] z-40 px-4 pt-4 flex items-center justify-between pb-3">
+                            <button onClick={() => setActivePost(null)} className="p-1 -ml-1 text-black">
+                                <ArrowLeft className="w-6 h-6" />
+                            </button>
+                            <div className="flex gap-4">
+                                {!activePost.isMine ? (
+                                    <button onClick={() => setModalType("report")} className="text-red-500">
+                                        <Siren className="w-6 h-6" />
+                                    </button>
+                                ) : (
+                                    <button onClick={() => setModalType("edit")} className="text-black">
+                                        <Edit className="w-6 h-6" />
+                                    </button>
+                                )}
                             </div>
                         </div>
 
@@ -292,32 +294,34 @@ export default function CommunityPage() {
                                 ))}
                             </div>
                         </div>
-                        {/* Spacer for bottom */}
                     </div>
-                )}
+                </div>
+            )}
+            {/* Main Footer - Full width */}
+            {!activePost && (
+                <div className="w-full mt-auto">
+                    <Footer />
+                </div>
+            )}
 
-                {/* Main Footer applies only if no active post, but keeping consistent */}
-                {!activePost && <Footer />}
+            {/* ================= MODALS ================= */}
 
-                {/* ================= MODALS ================= */}
+            {/* CREATE / EDIT POST MODAL */}
+            {(modalType === "create" || modalType === "edit") && (
+                <CreatePostModal
+                    modalType={modalType}
+                    onClose={() => setModalType("none")}
+                />
+            )}
 
-                {/* CREATE / EDIT POST MODAL */}
-                {(modalType === "create" || modalType === "edit") && (
-                    <CreatePostModal
-                        modalType={modalType}
-                        onClose={() => setModalType("none")}
-                    />
-                )}
+            {/* REPORT POST MODAL */}
+            {modalType === "report" && (
+                <ReportPostModal
+                    postTitle={activePost?.title}
+                    onClose={() => setModalType("none")}
+                />
+            )}
 
-                {/* REPORT POST MODAL */}
-                {modalType === "report" && (
-                    <ReportPostModal
-                        postTitle={activePost?.title}
-                        onClose={() => setModalType("none")}
-                    />
-                )}
-
-            </div>
         </div>
     );
 }
