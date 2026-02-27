@@ -53,7 +53,7 @@ const POSTS_DATA: PostType[] = [
         fullDesc: "แค่อยากมาแชร์ประสบการณ์เกี่ยว\nกับชาคาโมมายล์ค่ะ\nฉันดื่มมันก่อนนอนมา 2\nสัปดาห์แล้ว\nและคุณภาพการนอนของฉันดีขึ้น\nอย่างมาก\nเคล็ดลับคือควรแช่ชาไว้อย่างน้อย\n5 นาทีเพื่อให้ได้ประโยชน์เต็มที่",
         image: "https://images.unsplash.com/photo-1597481499750-3e6b22637e12?auto=format&fit=crop&q=80&w=400",
         likes: 24,
-        commentsCount: 5,
+        commentsCount: 4,
         shares: 2,
         isMine: false,
         comments: [
@@ -73,7 +73,7 @@ const POSTS_DATA: PostType[] = [
         fullDesc: "แจกสูตรน้ำต้มสมุนไพรแก้ร้อนในครับ ใช้รากบัว เก๊กฮวย และหล่อฮังก๊วย ต้มรวมกัน ดื่มแบบเย็นชื่นใจมาก ใครสนใจสูตรละเอียดทักมาได้เลย!",
         image: "https://images.unsplash.com/photo-1502444330042-d1a1ddf9bb5b?auto=format&fit=crop&q=80&w=400",
         likes: 128,
-        commentsCount: 15,
+        commentsCount: 1,
         shares: 20,
         isMine: true,
         comments: [
@@ -107,7 +107,7 @@ const POSTS_DATA: PostType[] = [
         fullDesc: "ตอนแรกฉันกังขาอยู่นะ แต่ชาขิงสดช่วยให้ท้องของฉันสงบลงได้จริง ๆ ตอนที่ฉันตั้งครรภ์ ฉันหั่นขิงสด แช่ทิ้งไว้ 10 นาที แล้วเติมน้ำผึ้งลงไป เปลี่ยนเกมเลย!",
         image: null,
         likes: 20,
-        commentsCount: 1,
+        commentsCount: 0,
         shares: 3,
         isMine: true,
         comments: []
