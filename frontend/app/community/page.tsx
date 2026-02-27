@@ -3,6 +3,8 @@
 import React, { useState } from "react";
 import Nav from "../components/Nav";
 import Footer from "../components/Footer";
+import CreatePostModal from "../components/forcommunity/CreatePostModal";
+import ReportPostModal from "../components/forcommunity/ReportPostModal";
 import {
     Search,
     Filter,
@@ -10,14 +12,8 @@ import {
     MessageCircle,
     Upload,
     ArrowLeft,
-    X,
-    Camera,
-    Video,
-    Image as ImageIcon,
-    Smile,
     Plus,
     Edit,
-    BellRing // Siren equivalent in some lucide versions, or I'll use typical ones.
 } from "lucide-react";
 
 // Fallbacks for Siren if needed. Wait, Lucide React ^0.563.0 has Siren. I'll use Siren.
@@ -121,7 +117,6 @@ const POSTS_DATA: PostType[] = [
 export default function CommunityPage() {
     const [activePost, setActivePost] = useState<PostType | null>(null);
     const [modalType, setModalType] = useState<"none" | "create" | "edit" | "report">("none");
-    const [reportReason, setReportReason] = useState<string>("ข้อมูลทางการแพทย์ที่บิดเบือน / ไม่ถูกต้อง");
 
     // Render lists of posts
     const renderPostCard = (post: PostType) => (
@@ -308,149 +303,18 @@ export default function CommunityPage() {
 
                 {/* CREATE / EDIT POST MODAL */}
                 {(modalType === "create" || modalType === "edit") && (
-                    <div className="fixed inset-0 z-[60] bg-black/50 flex items-center justify-center p-4">
-                        <div className="bg-white rounded-[14px] w-full max-w-sm flex flex-col shadow-2xl relative overflow-hidden ring-2 ring-purple-400">
-
-                            <div className="flex justify-between items-center px-4 py-3 border-b border-gray-100">
-                                <div className="font-bold text-lg text-green-600 text-center w-full">
-                                    {modalType === "create" ? "สร้างโพสต์ใหม่" : "แก้ไขโพสต์ของคุณ"}
-                                </div>
-                                <button
-                                    onClick={() => setModalType("none")}
-                                    className="absolute right-4 text-black hover:bg-gray-100 rounded-full p-1"
-                                >
-                                    <X className="w-6 h-6 stroke-[2.5]" />
-                                </button>
-                            </div>
-
-                            <div className="p-4 flex flex-col gap-4">
-                                <div className="flex items-center gap-2">
-                                    <label className="text-[14px] font-medium text-gray-600 whitespace-nowrap">หัวข้อ :</label>
-                                    <input
-                                        type="text"
-                                        placeholder={modalType === "create" ? "เพิ่มหัวข้อของคุณ ..." : "ประโยชน์ของชาคาโมมายล์ต่อการนอน"}
-                                        className="border border-gray-300 rounded-md px-3 py-1.5 flex-1 text-sm outline-none text-gray-800"
-                                        defaultValue={modalType === "edit" ? "ประโยชน์ของชาคาโมมายล์ต่อการนอน" : ""}
-                                    />
-                                </div>
-
-                                <div className="flex flex-col">
-                                    <label className="text-[14px] font-medium text-gray-600 mb-1">เนื้อหา :</label>
-                                    <textarea
-                                        rows={8}
-                                        placeholder="เพิ่มเนื้อหาของคุณ ..."
-                                        className="border border-gray-300 rounded-md w-full p-3 text-sm outline-none resize-none text-gray-800 leading-relaxed"
-                                        defaultValue={modalType === "edit" ? "แค่อยากมา" : ""}
-                                    ></textarea>
-                                </div>
-                            </div>
-
-                            <div className="px-4 pb-4 pt-2 flex justify-between items-center">
-                                <span className="text-[13px] text-gray-400 font-medium">
-                                    จำนวน {modalType === "edit" ? "3" : "0"} คำ
-                                </span>
-
-                                <div className="flex items-center gap-2 sm:gap-3 text-gray-800">
-                                    <button><Camera className="w-5 h-5" /></button>
-                                    <button><Video className="w-5 h-5" /></button>
-                                    <button><ImageIcon className="w-5 h-5" /></button>
-                                    <button><Smile className="w-5 h-5" /></button>
-                                    <button
-                                        onClick={() => setModalType("none")}
-                                        className="ml-2 bg-[#6BB75B] text-white px-4 py-1.5 rounded-md font-bold text-[14px] shadow-sm tracking-wide"
-                                    >
-                                        {modalType === "edit" ? "บันทึก" : "โพสต์"}
-                                    </button>
-                                </div>
-                            </div>
-
-                        </div>
-                    </div>
+                    <CreatePostModal
+                        modalType={modalType}
+                        onClose={() => setModalType("none")}
+                    />
                 )}
 
                 {/* REPORT POST MODAL */}
                 {modalType === "report" && (
-                    <div className="fixed inset-0 z-[60] bg-black/50 flex items-center justify-center p-4">
-                        <div className="bg-white rounded-[14px] w-full max-w-sm flex flex-col shadow-2xl relative overflow-hidden">
-
-                            <div className="flex justify-between items-center px-4 py-4 pt-5">
-                                <div className="font-bold text-[18px] text-[#EB5757] text-center w-full">
-                                    รายงานโพสต์
-                                </div>
-                                <button
-                                    onClick={() => setModalType("none")}
-                                    className="absolute right-4 top-5 text-black hover:bg-gray-100 rounded-full p-1"
-                                >
-                                    <X className="w-6 h-6 stroke-[3]" />
-                                </button>
-                            </div>
-
-                            <div className="px-4 pb-5 flex flex-col gap-3">
-
-                                {/* Topic info */}
-                                <div className="flex flex-col mt-2">
-                                    <label className="text-[13px] text-gray-500 font-medium mb-1">หัวข้อโพสต์ :</label>
-                                    <input
-                                        type="text"
-                                        readOnly
-                                        value={activePost?.title || "ประโยชน์ของชาคาโมมายล์ต่อการนอน"}
-                                        className="border border-gray-200 rounded-md px-3 py-2.5 text-sm text-gray-500 bg-white cursor-not-allowed outline-none"
-                                    />
-                                </div>
-
-                                <label className="text-[13px] text-gray-500 font-medium mt-1">
-                                    ทำไมคุณถึงรายงานโพสต์นี้ :
-                                </label>
-
-                                <div className="flex flex-col gap-2 mt-1">
-                                    {[
-                                        "ข้อมูลทางการแพทย์ที่บิดเบือน / ไม่ถูกต้อง",
-                                        "เนื้อหาเป็นการคุกคาม หรือการกลั่นแกล้ง",
-                                        "เนื้อหาที่ไม่เหมาะสม",
-                                        "เนื้อหานอกประเด็น / ไม่เกี่ยวข้องกับหัวข้อ",
-                                        "อื่น ๆ"
-                                    ].map(option => {
-                                        const isSelected = reportReason === option;
-                                        return (
-                                            <label
-                                                key={option}
-                                                className={`border rounded-md px-3 py-2.5 flex items-center gap-3 cursor-pointer transition-colors ${isSelected ? 'border-red-400 bg-[#FFF5F5]' : 'border-gray-200'
-                                                    }`}
-                                                onClick={() => setReportReason(option)}
-                                            >
-                                                <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${isSelected ? 'border-black bg-black' : 'border-gray-400'
-                                                    }`}>
-                                                    {isSelected && <div className="w-1.5 h-1.5 bg-white rounded-full"></div>}
-                                                </div>
-                                                <span className={`text-[13px] font-bold ${isSelected ? 'text-black' : 'text-gray-500'}`}>
-                                                    {option}
-                                                </span>
-                                            </label>
-                                        );
-                                    })}
-                                </div>
-
-                                <div className="flex flex-col mt-1">
-                                    <label className="text-[13px] text-gray-500 font-medium mb-1 truncate">
-                                        รายละเอียดเพิ่มเติม (ไม่บังคับ)
-                                    </label>
-                                    <textarea
-                                        rows={2}
-                                        placeholder="ให้เนื้อหาเพิ่มเติมเพื่อช่วยให้เราเข้าใจปัญหานี้ ..."
-                                        className="border border-gray-200 rounded-md p-3 text-sm outline-none resize-none text-gray-800 placeholder-gray-400"
-                                    ></textarea>
-                                </div>
-
-                                <button
-                                    onClick={() => setModalType("none")}
-                                    className="w-[#100px] mt-3 self-end bg-[#EB5757] text-white px-5 py-2.5 rounded-md font-bold text-sm shadow-sm"
-                                >
-                                    ส่งรายงาน
-                                </button>
-
-                            </div>
-                        </div>
-                    </div>
+                    <ReportPostModal
+                        postTitle={activePost?.title}
+                        onClose={() => setModalType("none")}
+                    />
                 )}
 
             </div>
