@@ -166,9 +166,10 @@ func Login(c *fiber.Ctx) error {
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"user_id": user.ID.Hex(),
-		"email":   user.Email,
-		"exp":     time.Now().Add(72 * time.Hour).Unix(),
+		"user_id":  user.ID.Hex(),
+		"email":    user.Email,
+		"username": user.Username,
+		"exp":      time.Now().Add(72 * time.Hour).Unix(),
 	})
 
 	secret := os.Getenv("JWT_SECRET")

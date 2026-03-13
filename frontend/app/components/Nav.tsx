@@ -98,11 +98,11 @@ export default function Nav() {
 
       <div className="flex justify-center mb-1 mt-2">
         <div className="flex w-full max-w-md justify-between text-black">
-          
+
           {/* หน้าแรก */}
           <div className="flex flex-col items-center mt-3 sm:mt-4 md:mt-5 cursor-pointer">
-            <Link 
-              href="/homepage" 
+            <Link
+              href="/homepage"
               className={`flex flex-col items-center cursor-pointer gap-0.5 group transition-colors duration-300 ${isActive('/homepage') ? 'text-[#1C7D29]' : 'text-gray-500 hover:text-[#1C7D29]'}`}
             >
               <svg className={`w-[22px] h-[22px] transition-transform duration-300 ${isActive('/homepage') ? '-translate-y-1' : 'group-hover:-translate-y-1'}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -114,8 +114,8 @@ export default function Nav() {
 
           {/* ชุมชน */}
           <div className="flex flex-col items-center mt-3 sm:mt-4 md:mt-5 cursor-pointer">
-            <Link 
-              href="/post/feed" 
+            <Link
+              href="/post/feed"
               className={`flex flex-col items-center cursor-pointer gap-0.5 group transition-colors duration-300 ${isActive('/post/feed') ? 'text-[#1C7D29]' : 'text-gray-500 hover:text-[#1C7D29]'}`}
             >
               <svg className={`w-[22px] h-[22px] transition-transform duration-300 ${isActive('/post/feed') ? '-translate-y-1' : 'group-hover:-translate-y-1'}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -130,8 +130,8 @@ export default function Nav() {
 
           {/* ค้นหาอาการ */}
           <div className="flex flex-col items-center mt-3 sm:mt-4 md:mt-5 cursor-pointer">
-            <Link 
-              href="/aisearch/text" 
+            <Link
+              href="/aisearch/text"
               className={`flex flex-col items-center cursor-pointer gap-0.5 group transition-colors duration-300 ${isActive('/aisearch/text') ? 'text-[#1C7D29]' : 'text-gray-500 hover:text-[#1C7D29]'}`}
             >
               <svg className={`w-[22px] h-[22px] transition-transform duration-300 ${isActive('/aisearch/text') ? '-translate-y-1' : 'group-hover:-translate-y-1'}`} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -149,11 +149,11 @@ export default function Nav() {
 
           {/* ค้นหารูป */}
           <div className="flex flex-col items-center mt-3 sm:mt-4 md:mt-5 cursor-pointer">
-            <Link 
-              href="/aisearch/image" 
-              className={`flex flex-col items-center cursor-pointer gap-0.5 group transition-colors duration-300 ${isActive('/aisearch/image') ? 'text-[#1C7D29]' : 'text-gray-500 hover:text-[#1C7D29]'}`}
+            <Link
+              href="/Image/Search"
+              className={`flex flex-col items-center cursor-pointer gap-0.5 group transition-colors duration-300 ${isActive('/Image/Search') ? 'text-[#1C7D29]' : 'text-gray-500 hover:text-[#1C7D29]'}`}
             >
-              <svg className={`w-[22px] h-[22px] transition-transform duration-300 ${isActive('/aisearch/image') ? '-translate-y-1' : 'group-hover:-translate-y-1'}`} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <svg className={`w-[22px] h-[22px] transition-transform duration-300 ${isActive('/Image/Search') ? '-translate-y-1' : 'group-hover:-translate-y-1'}`} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M2 7V3C2 2.44772 2.44772 2 3 2H7" stroke="currentColor" strokeWidth={2} strokeLinecap="round" />
                 <path d="M17 2H21C21.5523 2 22 2.44772 22 3V7" stroke="currentColor" strokeWidth={2} strokeLinecap="round" />
                 <path d="M2 17V21C2 21.5523 2.44772 22 3 22H7" stroke="currentColor" strokeWidth={2} strokeLinecap="round" />
@@ -168,8 +168,8 @@ export default function Nav() {
 
           {/* เปรียบเทียบ */}
           <div className="flex flex-col items-center mt-3 sm:mt-4 md:mt-5 cursor-pointer">
-            <Link 
-              href="#" 
+            <Link
+              href="#"
               className={`flex flex-col items-center cursor-pointer gap-0.5 group transition-colors duration-300 ${isActive('/compare') ? 'text-[#1C7D29]' : 'text-gray-500 hover:text-[#1C7D29]'}`}
             >
               <svg className={`w-[22px] h-[22px] transition-transform duration-300 ${isActive('/compare') ? '-translate-y-1' : 'group-hover:-translate-y-1'}`} viewBox="0 0 400 450" fill="none" xmlns="http://www.w3.org/2000/svg">

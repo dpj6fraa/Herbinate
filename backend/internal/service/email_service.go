@@ -2,8 +2,10 @@ package service
 
 import (
 	"fmt"
+	"mime"
 	"net/smtp"
 	"os"
+	"strings"
 )
 
 type EmailService struct {
@@ -32,7 +34,7 @@ func (s *EmailService) SendOTP(toEmail, otp string) error {
 		s.Host,
 	)
 
-	subject := "ยืนยันอีเมลของคุณ (OTP)"
+	subject := mime.BEncoding.Encode("utf-8", "ยืนยันอีเมลของคุณ (OTP)")
 	body := fmt.Sprintf(`
 สวัสดี 👋
 
@@ -45,6 +47,7 @@ func (s *EmailService) SendOTP(toEmail, otp string) error {
 
 — Herbinate
 `, otp)
+	body = strings.ReplaceAll(body, "\n", "\r\n")
 
 	msg := []byte(
 		"From: " + s.From + "\r\n" +
@@ -67,7 +70,7 @@ func (s *EmailService) SendPasswordResetOTP(toEmail, otp string) error {
 		s.Host,
 	)
 
-	subject := "คำขอรีเซ็ตรหัสผ่าน Herbinate (OTP)"
+	subject := mime.BEncoding.Encode("utf-8", "คำขอรีเซ็ตรหัสผ่าน Herbinate (OTP)")
 	body := fmt.Sprintf(`
 สวัสดี 👋
 
@@ -81,6 +84,7 @@ func (s *EmailService) SendPasswordResetOTP(toEmail, otp string) error {
 
 — Herbinate
 `, otp)
+	body = strings.ReplaceAll(body, "\n", "\r\n")
 
 	msg := []byte(
 		"From: " + s.From + "\r\n" +
@@ -92,5 +96,5 @@ func (s *EmailService) SendPasswordResetOTP(toEmail, otp string) error {
 	)
 
 	addr := s.Host + ":" + s.Port
-	return smtp.SendMail(addr, auth, s.Username, []string{toEmail}, msg)
+	return smtp.SendMail(addr, auth, s.From, []string{toEmail}, msg)
 }

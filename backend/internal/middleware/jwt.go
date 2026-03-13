@@ -9,7 +9,9 @@ import (
 )
 
 type Claims struct {
-	UserID string `json:"user_id"`
+	UserID   string `json:"user_id"`
+	Email    string `json:"email"`
+	Username string `json:"username"`
 	jwt.RegisteredClaims
 }
 
@@ -21,15 +23,17 @@ func getJWTSecret() []byte {
 	fmt.Println("=> [getJWTSecret] Loaded JWT_SECRET:", secret)
 
 	if secret == "" {
-		secret = "Default" // ควรตั้งค่า JWT_SECRET ในไฟล์ .env เสมอ
+		secret = "Default" 
 		fmt.Println("=> [getJWTSecret] Using fallback secret")
 	}
 	return []byte(secret)
 }
 
-func GenerateToken(userID string) (string, error) {
+func GenerateToken(userID, email, username string) (string, error) {
 	claims := Claims{
-		UserID: userID,
+		UserID:   userID,
+		Email:    email,
+		Username: username,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
