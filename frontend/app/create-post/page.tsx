@@ -84,6 +84,7 @@ export default function CreatePostPage() {
 
       const data = await res.json();
       router.push(`/post/${data.post_id}`); // หรือหน้า feed ของคุณ
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (err) {
       setError("เชื่อมต่อเซิร์ฟเวอร์ไม่ได้");
     } finally {

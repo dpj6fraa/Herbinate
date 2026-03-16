@@ -32,8 +32,11 @@ func SetupRoutes(app *fiber.App) {
 	auth.Post("/register", handlers.Register)
 	auth.Post("/login", handlers.Login)
 	// TODO: Implement VerifyEmail and ResendOTP in auth_handler.go
-	// auth.Post("/verify-email", handlers.VerifyEmail)
-	// auth.Post("/resend-otp", handlers.ResendOTP)
+	auth.Post("/verify-email", handlers.VerifyEmail)
+	auth.Post("/resend-otp", handlers.ResendOTP)
+
+	auth.Post("/forgot-password", handlers.ForgotPassword)
+	auth.Post("/reset-password", handlers.ResetPassword)
 
 	// User routes
 	users := api.Group("/users")
@@ -56,10 +59,28 @@ func SetupRoutes(app *fiber.App) {
 	posts.Delete("/delete", middleware.AuthMiddleware(), postHandler.DeletePost)
 
 	// Herbs routes
-	herbs := api.Group("/herbs")
-	herbs.Get("/", handlers.GetAllHerbs)
-	herbs.Get("/:id", handlers.GetHerbByID)
-	herbs.Post("/", handlers.CreateHerb)
-	herbs.Put("/:id", handlers.UpdateHerb)
-	herbs.Delete("/:id", handlers.DeleteHerb)
+	api.Get("/herbs", handlers.GetAllHerbs)
+	api.Get("/herbs/:id", handlers.GetHerbByID)
+	api.Post("/herbs", handlers.CreateHerb)
+	api.Put("/herbs/:id", handlers.UpdateHerb)
+	api.Delete("/herbs/:id", handlers.DeleteHerb)
+	api.Get("/herbs/search", handlers.SearchByTag)
+
+	// Articles
+	articles := api.Group("/articles")
+	articles.Get("/", handlers.GetAllArticles)
+	articles.Get("/search", handlers.SearchArticleByTag)
+	articles.Get("/:id", handlers.GetArticleByID)
+	articles.Post("/", middleware.AuthMiddleware(), handlers.CreateArticle)
+	articles.Put("/:id", middleware.AuthMiddleware(), handlers.UpdateArticle)
+	articles.Delete("/:id", middleware.AuthMiddleware(), handlers.DeleteArticle)
+
+	// User route — ต้อง login
+	api.Post("/reports", middleware.AuthMiddleware(), handlers.CreateReport)
+
+	// Admin routes — ต้อง login + เป็น admin
+	admin := api.Group("/admin", middleware.AuthMiddleware() /*, middleware.AdminRequired */)
+	admin.Get("/reports", handlers.GetReports)
+	admin.Get("/reports/:id", handlers.GetReportByID)
+	admin.Patch("/reports/:id", handlers.UpdateReportStatus)
 }

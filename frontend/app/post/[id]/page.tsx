@@ -114,7 +114,9 @@ export default function PostDetailPage() {
       <div>
         <p className="font-semibold text-black">{data.post.username}</p>
         <p className="text-xs text-gray-500">
-          {new Date(data.post.createdAt).toLocaleString()}
+          {new Date(
+            (data.post as typeof data.post & { created_at: string }).created_at
+          ).toLocaleString()}
         </p>
       </div>
     </div>

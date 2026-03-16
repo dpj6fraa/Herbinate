@@ -5,7 +5,7 @@ import (
 	"math/rand"
 	"time"
 
-	"myapp/internal/repository"
+	"herb-api/internal/repository"
 )
 
 type OTPService struct{}
@@ -20,14 +20,9 @@ func (s *OTPService) Generate() string {
 }
 
 func (s *OTPService) Verify(email, code string, repo *repository.OTPRepository) bool {
-	otp, err := repo.FindByEmail(email)
+	ok, err := repo.VerifyOTP(email, code)
 	if err != nil {
 		return false
 	}
-
-	if time.Now().After(otp.ExpiresAt) {
-		return false
-	}
-
-	return otp.Code == code
+	return ok
 }

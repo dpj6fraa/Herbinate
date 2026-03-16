@@ -111,7 +111,9 @@ async function sharePost(postID: string) {
             {/* User */}
             <p className="text-sm text-gray-500 mb-1">
               {post.username} •{" "}
-              {new Date(post.createdAt).toLocaleString()}
+              {new Date(
+                (post as typeof post & { created_at: string }).created_at
+              ).toLocaleString()}
             </p>
 
             {/* Title */}
