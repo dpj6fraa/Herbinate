@@ -16,7 +16,7 @@ function AnalyzingContent() {
   useEffect(() => {
     if (!symptom) return;
 
-    const apiUrl = process.env.NEXT_PUBLIC_AI_API_URL || "http://localhost:8081";
+    const apiUrl = "http://45.32.117.163:8081";
 
     fetch(`${apiUrl}/api/herb-search`, {
       method: "POST",
