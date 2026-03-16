@@ -59,15 +59,15 @@ func SetupRoutes(app *fiber.App) {
 	posts.Delete("/delete", middleware.AuthMiddleware(), postHandler.DeletePost)
 
 	// Herbs routes
-	app.Get("/herbs", handlers.GetAllHerbs)
-	app.Get("/herbs/:id", handlers.GetHerbByID)
-	app.Post("/herbs", handlers.CreateHerb)
-	app.Put("/herbs/:id", handlers.UpdateHerb)
-	app.Delete("/herbs/:id", handlers.DeleteHerb)
-	app.Get("/herbs/search", handlers.SearchByTag)
+	api.Get("/herbs", handlers.GetAllHerbs)
+	api.Get("/herbs/:id", handlers.GetHerbByID)
+	api.Post("/herbs", handlers.CreateHerb)
+	api.Put("/herbs/:id", handlers.UpdateHerb)
+	api.Delete("/herbs/:id", handlers.DeleteHerb)
+	api.Get("/herbs/search", handlers.SearchByTag)
 
 	// Articles
-	articles := app.Group("/articles")
+	articles := api.Group("/articles")
 	articles.Get("/", handlers.GetAllArticles)
 	articles.Get("/search", handlers.SearchArticleByTag)
 	articles.Get("/:id", handlers.GetArticleByID)
@@ -76,11 +76,10 @@ func SetupRoutes(app *fiber.App) {
 	articles.Delete("/:id", middleware.AuthMiddleware(), handlers.DeleteArticle)
 
 	// User route — ต้อง login
-	app.Post("/reports", middleware.AuthMiddleware(), handlers.CreateReport)
+	api.Post("/reports", middleware.AuthMiddleware(), handlers.CreateReport)
 
 	// Admin routes — ต้อง login + เป็น admin
-	// (ปรับ middleware.AdminRequired ตามระบบ Auth ที่มี)
-	admin := app.Group("/admin", middleware.AuthMiddleware() /*, middleware.AdminRequired */)
+	admin := api.Group("/admin", middleware.AuthMiddleware() /*, middleware.AdminRequired */)
 	admin.Get("/reports", handlers.GetReports)
 	admin.Get("/reports/:id", handlers.GetReportByID)
 	admin.Patch("/reports/:id", handlers.UpdateReportStatus)
