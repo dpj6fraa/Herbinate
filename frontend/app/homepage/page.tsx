@@ -42,12 +42,12 @@ type Post = {
 // ==========================================
 function SearchBar() {
   const router = useRouter();
-  
+
   // 🌟 States เก็บข้อมูลทั้งหมดสำหรับค้นหา
   const [herbs, setHerbs] = useState<Herb[]>([]);
   const [articles, setArticles] = useState<Article[]>([]);
   const [posts, setPosts] = useState<Post[]>([]);
-  
+
   const [searchQuery, setSearchQuery] = useState("");
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -55,27 +55,27 @@ function SearchBar() {
   // โหลดข้อมูลมาเตรียมไว้ตอนเปิดหน้าเว็บ
   useEffect(() => {
     Promise.all([
-      fetch(`${API}/herbs`).then(res => res.ok ? res.json() : []),
-      fetch(`${API}/articles`).then(res => res.ok ? res.json() : []),
+      fetch(`${API}/api/herbs`).then(res => res.ok ? res.json() : []),
+      fetch(`${API}/api/articles`).then(res => res.ok ? res.json() : []),
       // 🌟🌟 แก้ URL ตรงนี้ให้ชี้ไปที่ /api/posts/feed ตาม routes.go ของคุณ
-      fetch(`${API}/api/posts/feed`).then(res => res.ok ? res.json() : []) 
+      fetch(`${API}/api/posts/feed`).then(res => res.ok ? res.json() : [])
     ])
-    .then(([herbsData, articlesData, postsData]) => {
-      
-      setHerbs(Array.isArray(herbsData) ? herbsData : herbsData?.data || []);
-      setArticles(Array.isArray(articlesData) ? articlesData : articlesData?.data || []);
-      
-      // กันเหนียวเผื่อข้อมูล posts ถูกห่อมาในรูปแบบอื่น
-      let finalPosts = [];
-      if (Array.isArray(postsData)) {
-        finalPosts = postsData;
-      } else if (postsData && Array.isArray(postsData.data)) {
-        finalPosts = postsData.data;
-      }
-      setPosts(finalPosts);
+      .then(([herbsData, articlesData, postsData]) => {
 
-    })
-    .catch(err => console.error("Error fetching search data:", err));
+        setHerbs(Array.isArray(herbsData) ? herbsData : herbsData?.data || []);
+        setArticles(Array.isArray(articlesData) ? articlesData : articlesData?.data || []);
+
+        // กันเหนียวเผื่อข้อมูล posts ถูกห่อมาในรูปแบบอื่น
+        let finalPosts = [];
+        if (Array.isArray(postsData)) {
+          finalPosts = postsData;
+        } else if (postsData && Array.isArray(postsData.data)) {
+          finalPosts = postsData.data;
+        }
+        setPosts(finalPosts);
+
+      })
+      .catch(err => console.error("Error fetching search data:", err));
   }, []);
 
   // ปิด Dropdown เมื่อคลิกที่อื่น
@@ -93,7 +93,7 @@ function SearchBar() {
   const filteredHerbs = herbs.filter(h =>
     h.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     h.scientific_name?.toLowerCase().includes(searchQuery.toLowerCase())
-  ).slice(0, 5); 
+  ).slice(0, 5);
 
   const filteredArticles = articles.filter(a =>
     a.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -124,7 +124,7 @@ function SearchBar() {
             src="/images/herbs.webp"
             alt="Herbinate Background"
             fill
-            className="object-cover opacity-60" 
+            className="object-cover opacity-60"
           />
         </div>
 
@@ -152,9 +152,9 @@ function SearchBar() {
                 placeholder="ค้นหาสมุนไพร, บทความ, กระทู้..."
                 className="w-full py-3 px-6 rounded-full text-sm text-black bg-white focus:outline-none focus:ring-4 focus:ring-[#71CE61]/50 shadow-xl transition-all"
               />
-              
+
               {searchQuery ? (
-                <button 
+                <button
                   onClick={() => { setSearchQuery(""); setIsOpen(false); }}
                   className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 transition-colors p-1"
                 >
@@ -185,7 +185,7 @@ function SearchBar() {
                           {filteredHerbs.map((herb) => (
                             <div
                               key={herb.id}
-                              onClick={() => router.push(`/herbs/${herb.id}`)}
+                              onClick={() => router.push(`/api/herbs/${herb.id}`)}
                               className="px-5 py-3 hover:bg-gray-50 cursor-pointer transition-colors flex flex-col"
                             >
                               <span className="text-sm text-gray-800 font-medium line-clamp-1">{highlightText(herb.name, searchQuery)}</span>
@@ -205,7 +205,7 @@ function SearchBar() {
                           {filteredArticles.map((article) => (
                             <div
                               key={article.id}
-                              onClick={() => router.push(`/articles/${article.id}`)}
+                              onClick={() => router.push(`/api/articles/${article.id}`)}
                               className="px-5 py-3 hover:bg-gray-50 cursor-pointer transition-colors flex flex-col"
                             >
                               <span className="text-sm text-gray-800 font-medium line-clamp-1">{highlightText(article.title, searchQuery)}</span>
@@ -225,7 +225,7 @@ function SearchBar() {
                             <div
                               key={post.id}
                               // 🌟 ไปที่หน้า /post/[id]
-                              onClick={() => router.push(`/post/${post.id}`)} 
+                              onClick={() => router.push(`/post/${post.id}`)}
                               className="px-5 py-3 hover:bg-gray-50 cursor-pointer transition-colors flex flex-col"
                             >
                               <span className="text-sm text-gray-800 font-medium line-clamp-1">{highlightText(post.title, searchQuery)}</span>
@@ -241,7 +241,7 @@ function SearchBar() {
                     </div>
                   )}
                 </div>
-                
+
                 {hasResults && (
                   <div className="bg-gray-50 p-2 text-center text-[10px] text-gray-400 border-t border-gray-100">
                     เลือกผลลัพธ์ที่ต้องการเพื่อดูรายละเอียด
@@ -348,22 +348,22 @@ function PopularHerbs({ data }: { data: Herb[] }) {
 
   return (
     <div className="w-full bg-white sm:px-6">
-        <div className="bg-white border-b border-gray-200/50">
-            <div className="max-w-150 mx-auto px-4 py-3 flex items-center justify-between">
-              <h2 className="text-sm font-medium text-gray-800">
-                สมุนไพรยอดนิยม
-              </h2>
-              <button 
-                onClick={() => router.push('/herbs')} 
-                className="group flex items-center gap-1 text-[11px] sm:text-xs font-medium text-green-600 hover:text-green-700 bg-green-50 hover:bg-green-100 px-3 py-1.5 rounded-full transition-all duration-200"
-              >
-                ดูทั้งหมด
-                <svg 
-                  className="w-3.5 h-3.5 transform group-hover:translate-x-0.5 transition-transform" 
-                  viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
-                >
-                  <polyline points="9 18 15 12 9 6"></polyline>
-                </svg>
+      <div className="bg-white border-b border-gray-200/50">
+        <div className="max-w-150 mx-auto px-4 py-3 flex items-center justify-between">
+          <h2 className="text-sm font-medium text-gray-800">
+            สมุนไพรยอดนิยม
+          </h2>
+          <button
+            onClick={() => router.push('/api/herbs')}
+            className="group flex items-center gap-1 text-[11px] sm:text-xs font-medium text-green-600 hover:text-green-700 bg-green-50 hover:bg-green-100 px-3 py-1.5 rounded-full transition-all duration-200"
+          >
+            ดูทั้งหมด
+            <svg
+              className="w-3.5 h-3.5 transform group-hover:translate-x-0.5 transition-transform"
+              viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+            >
+              <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
           </button>
         </div>
       </div>
@@ -376,9 +376,9 @@ function PopularHerbs({ data }: { data: Herb[] }) {
                 const imgSource = item.image_url ? `${API}${item.image_url}` : "/placeholder.png";
 
                 return (
-                  <div 
-                    key={item.id} 
-                    onClick={() => router.push(`/herbs/${item.id}`)} 
+                  <div
+                    key={item.id}
+                    onClick={() => router.push(`/api/herbs/${item.id}`)}
                     className="shrink-0 w-40 snap-start group cursor-pointer h-full"
                   >
                     <div className="flex flex-col bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300 h-full">
@@ -417,23 +417,23 @@ function HerbsNews({ data }: { data: Article[] }) {
 
   return (
     <div className="w-full bg-white sm:px-6 mt-2">
-        <div className="bg-white border-b border-gray-200/50">
-            <div className="max-w-150 mx-auto px-4 py-3 flex items-center justify-between">
-              <h2 className="text-sm font-medium text-gray-800">
-                บทความและเกร็ดความรู้
-              </h2>
-              <button 
-                onClick={() => router.push('/articles')} 
-                className="group flex items-center gap-1 text-[11px] sm:text-xs font-medium text-green-600 hover:text-green-700 bg-green-50 hover:bg-green-100 px-3 py-1.5 rounded-full transition-all duration-200"
-              >
-                ดูทั้งหมด
-                <svg 
-                  className="w-3.5 h-3.5 transform group-hover:translate-x-0.5 transition-transform" 
-                  viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
-                >
-                  <polyline points="9 18 15 12 9 6"></polyline>
-                </svg>
-              </button>
+      <div className="bg-white border-b border-gray-200/50">
+        <div className="max-w-150 mx-auto px-4 py-3 flex items-center justify-between">
+          <h2 className="text-sm font-medium text-gray-800">
+            บทความและเกร็ดความรู้
+          </h2>
+          <button
+            onClick={() => router.push('/api/articles')}
+            className="group flex items-center gap-1 text-[11px] sm:text-xs font-medium text-green-600 hover:text-green-700 bg-green-50 hover:bg-green-100 px-3 py-1.5 rounded-full transition-all duration-200"
+          >
+            ดูทั้งหมด
+            <svg
+              className="w-3.5 h-3.5 transform group-hover:translate-x-0.5 transition-transform"
+              viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+            >
+              <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+          </button>
         </div>
       </div>
 
@@ -445,9 +445,9 @@ function HerbsNews({ data }: { data: Article[] }) {
                 const imgSource = item.image_url ? `${API}${item.image_url}` : "/placeholder.png";
 
                 return (
-                  <div 
-                    key={item.id} 
-                    onClick={() => router.push(`/articles/${item.id}`)}
+                  <div
+                    key={item.id}
+                    onClick={() => router.push(`/api/articles/${item.id}`)}
                     className="shrink-0 w-40 snap-start group cursor-pointer h-full"
                   >
                     <div className="flex flex-col bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300 h-full">
@@ -488,18 +488,18 @@ function HomeContent() {
 
   useEffect(() => {
     Promise.all([
-      fetch(`${API}/herbs`).then(res => res.json()),
-      fetch(`${API}/articles`).then(res => res.json())
+      fetch(`${API}/api/herbs`).then(res => res.json()),
+      fetch(`${API}/api/articles`).then(res => res.json())
     ])
-    .then(([herbsData, articlesData]) => {
-      setHerbs(herbsData.slice(0, 10));
-      setArticles(articlesData.slice(0, 10));
-      setLoading(false);
-    })
-    .catch(err => {
-      console.error("Error fetching home data:", err);
-      setLoading(false);
-    });
+      .then(([herbsData, articlesData]) => {
+        setHerbs(herbsData.slice(0, 10));
+        setArticles(articlesData.slice(0, 10));
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error("Error fetching home data:", err);
+        setLoading(false);
+      });
   }, []);
 
   if (loading) {
