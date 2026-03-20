@@ -29,6 +29,7 @@ export default function ArticleDetailPage() {
   const [article, setArticle] = useState<Article | null>(null);
   const [loading, setLoading] = useState(true);
   const [isReportOpen, setIsReportOpen] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
 
   useEffect(() => {
     fetch(`${API}/api/articles/${params.id}`)
@@ -41,7 +42,50 @@ export default function ArticleDetailPage() {
         setLoading(false);
       })
       .catch(() => setLoading(false));
+
+    const token = localStorage.getItem("token");
+    if (token) {
+      fetch(`${API}/api/articles/${params.id}/bookmark`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+        .then((res) => {
+          if (!res.ok) throw new Error("Not bookmarked or error");
+          return res.json();
+        })
+        .then((data) => {
+          setIsSaved(!!(data.is_bookmarked !== false && data.bookmarked !== false));
+        })
+        .catch(() => {
+          setIsSaved(false);
+        });
+    }
   }, [params.id]);
+
+  const handleBookmark = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        router.push("/login");
+        return;
+      }
+
+      const res = await fetch(`${API}/api/articles/${params.id}/bookmark`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (res.ok) {
+        setIsSaved(!isSaved);
+      } else {
+        console.error("Failed to bookmark article");
+      }
+    } catch (error) {
+      console.error("Error bookmarking article:", error);
+    }
+  };
 
   if (loading) {
     return (
@@ -49,7 +93,6 @@ export default function ArticleDetailPage() {
         <Nav />
         <div className="flex-1 flex items-center justify-center">
           <div className="flex flex-col items-center gap-3">
-            {/* ปรับสี Spinner เป็นสีเขียว */}
             <div className="w-8 h-8 border-[3px] border-green-400 border-t-transparent rounded-full animate-spin" />
             <p className="text-gray-400 text-sm">กำลังโหลด...</p>
           </div>
@@ -67,7 +110,7 @@ export default function ArticleDetailPage() {
           <p className="text-gray-500">ไม่พบบทความ</p>
           <button
             onClick={() => router.push("/articles")}
-            className="text-sm text-green-600 underline" // ปรับเป็นสีเขียว
+            className="text-sm text-green-600 underline"
           >
             กลับหน้ารายการ
           </button>
@@ -88,8 +131,6 @@ export default function ArticleDetailPage() {
 
       <div className="flex-1 flex flex-col pt-4 lg:items-center">
         <div className="max-w-2xl mx-auto bg-white min-h-screen pb-10">
-
-          {/* รูปภาพ */}
           <div className="w-full aspect-video overflow-hidden rounded-xl shadow-lg bg-gray-100">
             {imageURL ? (
               <img
@@ -107,7 +148,6 @@ export default function ArticleDetailPage() {
             )}
           </div>
 
-          {/* ชื่อ + ปุ่ม Report */}
           <div className="px-6 pt-6 flex justify-between items-start">
             <div className="flex-1 pr-4">
               <h1 className="text-2xl font-bold text-gray-800 leading-snug">
@@ -115,25 +155,41 @@ export default function ArticleDetailPage() {
               </h1>
             </div>
 
-            <button
-              onClick={() => setIsReportOpen(true)}
-              title="รายงานบทความ"
-              className="p-2 rounded-full hover:bg-red-50 transition-colors cursor-pointer flex-shrink-0"
-            >
-              <svg
-                className="w-6 h-6 text-red-400"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={2}
-                viewBox="0 0 24 24"
+            <div className="flex gap-2 flex-shrink-0">
+              <button
+                onClick={handleBookmark}
+                title={isSaved ? "เลิกบันทึกบทความ" : "บันทึกบทความ"}
+                className="p-2 rounded-full hover:bg-green-50 transition-colors cursor-pointer"
               >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3 3v18" />
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3 5h13l-4 4 4 4H3" />
-              </svg>
-            </button>
-          </div>
+                <svg
+                  className={`w-6 h-6 ${isSaved ? "text-green-500 fill-green-500" : "text-gray-400"}`}
+                  fill={isSaved ? "currentColor" : "none"}
+                  stroke="currentColor"
+                  strokeWidth={2}
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+                </svg>
+              </button>
 
-          {/* Tags - เปลี่ยนเป็นสไตล์สีเขียวเหมือนหน้า Herb */}
+              <button
+                onClick={() => setIsReportOpen(true)}
+                title="รายงานบทความ"
+                className="p-2 rounded-full hover:bg-red-50 transition-colors cursor-pointer"
+              >
+                <svg
+                  className="w-6 h-6 text-red-400"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 3v18" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 5h13l-4 4 4 4H3" />
+                </svg>
+              </button>
+            </div>
+          </div>
           {article.tags && article.tags.length > 0 && (
             <div className="px-6 mt-4">
               <div className="flex flex-wrap gap-2">
@@ -148,11 +204,7 @@ export default function ArticleDetailPage() {
               </div>
             </div>
           )}
-
-          {/* Content */}
           <div className="px-6 mt-6 space-y-6">
-
-            {/* Description - ปรับ Border ให้เป็นสีเขียวอ่อน */}
             {article.description && (
               <p className="text-gray-600 text-base leading-relaxed border-l-4 border-[#BAF8A8] pl-4">
                 {article.description}
@@ -162,7 +214,7 @@ export default function ArticleDetailPage() {
             {sortedSections.map((sec, i) => (
               <section
                 key={i}
-                className="bg-[#EEFFE5] p-4 rounded-xl border border-gray-100 shadow-lg" // ปรับสีพื้นหลังและ Shadow ให้เท่ากัน
+                className="bg-[#EEFFE5] p-4 rounded-xl border border-gray-100 shadow-lg"
               >
                 {sec.title && (
                   <h3 className="font-bold text-gray-800 mb-2 border-l-4 border-[#BAF8A8] pl-2">
@@ -184,7 +236,7 @@ export default function ArticleDetailPage() {
       <ArticleReportModal
         isOpen={isReportOpen}
         onClose={() => setIsReportOpen(false)}
-        articleId={article.id}    // <-- ส่ง id จริงจาก DB
+        articleId={article.id}
         articleTitle={article.title}
       />
     </main>

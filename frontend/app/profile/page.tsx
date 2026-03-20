@@ -179,7 +179,7 @@ export default function ProfilePage() {
 
                 {/* Green highlight & Overlay text */}
                 <div className="absolute inset-0 rounded-full bg-black/0 group-hover:bg-black/20 ring-0 group-hover:ring-4 ring-[#71CE61] transition-all flex items-center justify-center">
-                   <span className="text-white text-xs opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-md font-medium">เปลี่ยนรูป</span>
+                  <span className="text-white text-xs opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-md font-medium">เปลี่ยนรูป</span>
                 </div>
               </div>
 
@@ -257,9 +257,8 @@ export default function ProfilePage() {
                     router.push("/profile/saved-articles");
                   }
                 }}
-                className={`flex items-center justify-between px-4 py-3.5 hover:bg-green-50/50 cursor-pointer transition-colors ${
-                  index !== items.length - 1 ? "border-b border-green-100" : ""
-                }`}
+                className={`flex items-center justify-between px-4 py-3.5 hover:bg-green-50/50 cursor-pointer transition-colors ${index !== items.length - 1 ? "border-b border-green-100" : ""
+                  }`}
               >
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-full bg-[#CFF3C5] flex items-center justify-center">
