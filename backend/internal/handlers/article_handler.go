@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"herb-api/internal/database"
+	"herb-api/internal/middleware"
 	"herb-api/internal/models"
 
 	"github.com/gofiber/fiber/v2"
@@ -203,4 +204,88 @@ func SearchArticleByTag(c *fiber.Ctx) error {
 	cursor.All(ctx, &articles)
 
 	return c.JSON(articles)
+}
+
+const articleBookmarkCollection = "article_bookmarks"
+
+func ToggleBookmarkArticle(c *fiber.Ctx) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	userID := middleware.GetUserID(c)
+	if userID == primitive.NilObjectID {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Unauthorized"})
+	}
+
+	articleID, err := primitive.ObjectIDFromHex(c.Params("id"))
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid article ID"})
+	}
+
+	collection := database.GetCollection(articleBookmarkCollection)
+
+	// Check if bookmark exists
+	filter := bson.M{"article_id": articleID, "user_id": userID}
+	var existing models.ArticleBookmark
+	err = collection.FindOne(ctx, filter).Decode(&existing)
+
+	if err == nil {
+		// Bookmark exists, so we toggle its status
+		newStatus := !existing.Status
+		update := bson.M{"$set": bson.M{"status": newStatus}}
+		_, err := collection.UpdateOne(ctx, filter, update)
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to update bookmark"})
+		}
+		
+		statusMsg := "Bookmark removed"
+		if newStatus {
+			statusMsg = "Bookmark added"
+		}
+		return c.JSON(fiber.Map{"message": statusMsg, "bookmarked": newStatus})
+	}
+
+	// Bookmark doesn't exist, so we create it
+	newBookmark := models.ArticleBookmark{
+		ID:        primitive.NewObjectID(),
+		ArticleID: articleID,
+		UserID:    userID,
+		Status:    true,
+		CreatedAt: time.Now(),
+	}
+
+	_, err = collection.InsertOne(ctx, newBookmark)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to add bookmark"})
+	}
+
+	return c.JSON(fiber.Map{"message": "Bookmark added", "bookmarked": true})
+}
+
+func GetArticleBookmarkStatus(c *fiber.Ctx) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	userID := middleware.GetUserID(c)
+	if userID == primitive.NilObjectID {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Unauthorized"})
+	}
+
+	articleID, err := primitive.ObjectIDFromHex(c.Params("id"))
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid article ID"})
+	}
+
+	collection := database.GetCollection(articleBookmarkCollection)
+
+	filter := bson.M{"article_id": articleID, "user_id": userID}
+	var existing models.ArticleBookmark
+	err = collection.FindOne(ctx, filter).Decode(&existing)
+
+	if err != nil {
+		// Not found means not bookmarked
+		return c.JSON(fiber.Map{"bookmarked": false})
+	}
+
+	return c.JSON(fiber.Map{"bookmarked": existing.Status})
 }

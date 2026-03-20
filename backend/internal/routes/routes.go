@@ -74,6 +74,8 @@ func SetupRoutes(app *fiber.App) {
 	articles.Post("/", middleware.AuthMiddleware(), handlers.CreateArticle)
 	articles.Put("/:id", middleware.AuthMiddleware(), handlers.UpdateArticle)
 	articles.Delete("/:id", middleware.AuthMiddleware(), handlers.DeleteArticle)
+	articles.Post("/:id/bookmark", middleware.AuthMiddleware(), handlers.ToggleBookmarkArticle)
+	articles.Get("/:id/bookmark", middleware.AuthMiddleware(), handlers.GetArticleBookmarkStatus)
 
 	// User route — ต้อง login
 	api.Post("/reports", middleware.AuthMiddleware(), handlers.CreateReport)
