@@ -32,7 +32,7 @@ export default function HerbDetailPage() {
   const [isReportOpen, setIsReportOpen] = useState(false);
 
   useEffect(() => {
-    fetch(`${API}/herbs/${params.id}`)
+    fetch(`${API}/api/herbs/${params.id}`)
       .then((res) => {
         if (!res.ok) throw new Error("Not found");
         return res.json();
@@ -192,12 +192,12 @@ export default function HerbDetailPage() {
       </div>
 
       <Footer />
-       <HerbReportModal
-         isOpen={isReportOpen}
-         onClose={() => setIsReportOpen(false)}
-         herbId={herb.id}          // <-- ส่ง id จริงจาก DB
-         herbName={herb.name}
-       />
+      <HerbReportModal
+        isOpen={isReportOpen}
+        onClose={() => setIsReportOpen(false)}
+        herbId={herb.id}          // <-- ส่ง id จริงจาก DB
+        herbName={herb.name}
+      />
     </main>
   );
 }

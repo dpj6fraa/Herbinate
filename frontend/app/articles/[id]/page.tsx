@@ -31,7 +31,7 @@ export default function ArticleDetailPage() {
   const [isReportOpen, setIsReportOpen] = useState(false);
 
   useEffect(() => {
-    fetch(`${API}/articles/${params.id}`)
+    fetch(`${API}/api/articles/${params.id}`)
       .then((res) => {
         if (!res.ok) throw new Error("Not found");
         return res.json();

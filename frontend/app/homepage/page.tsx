@@ -185,8 +185,8 @@ function SearchBar() {
                           {filteredHerbs.map((herb) => (
                             <div
                               key={herb.id}
-                              onClick={() => router.push(`/api/herbs/${herb.id}`)}
-                              className="px-5 py-3 hover:bg-gray-50 cursor-pointer transition-colors flex flex-col"
+                              onClick={() => router.push(`/herbs/${herb.id}`)}
+                              className="px-5 py-3 hover:bg-gray-50 cursor-poi  nter transition-colors flex flex-col"
                             >
                               <span className="text-sm text-gray-800 font-medium line-clamp-1">{highlightText(herb.name, searchQuery)}</span>
                               {herb.scientific_name && <span className="text-[11px] text-gray-400 italic line-clamp-1">{highlightText(herb.scientific_name, searchQuery)}</span>}
@@ -205,7 +205,7 @@ function SearchBar() {
                           {filteredArticles.map((article) => (
                             <div
                               key={article.id}
-                              onClick={() => router.push(`/api/articles/${article.id}`)}
+                              onClick={() => router.push(`/articles/${article.id}`)}
                               className="px-5 py-3 hover:bg-gray-50 cursor-pointer transition-colors flex flex-col"
                             >
                               <span className="text-sm text-gray-800 font-medium line-clamp-1">{highlightText(article.title, searchQuery)}</span>
@@ -354,7 +354,7 @@ function PopularHerbs({ data }: { data: Herb[] }) {
             สมุนไพรยอดนิยม
           </h2>
           <button
-            onClick={() => router.push('/api/herbs')}
+            onClick={() => router.push('/herbs')}
             className="group flex items-center gap-1 text-[11px] sm:text-xs font-medium text-green-600 hover:text-green-700 bg-green-50 hover:bg-green-100 px-3 py-1.5 rounded-full transition-all duration-200"
           >
             ดูทั้งหมด
@@ -378,7 +378,7 @@ function PopularHerbs({ data }: { data: Herb[] }) {
                 return (
                   <div
                     key={item.id}
-                    onClick={() => router.push(`/api/herbs/${item.id}`)}
+                    onClick={() => router.push(`/herbs/${item.id}`)}
                     className="shrink-0 w-40 snap-start group cursor-pointer h-full"
                   >
                     <div className="flex flex-col bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300 h-full">
@@ -423,7 +423,7 @@ function HerbsNews({ data }: { data: Article[] }) {
             บทความและเกร็ดความรู้
           </h2>
           <button
-            onClick={() => router.push('/api/articles')}
+            onClick={() => router.push('articles')}
             className="group flex items-center gap-1 text-[11px] sm:text-xs font-medium text-green-600 hover:text-green-700 bg-green-50 hover:bg-green-100 px-3 py-1.5 rounded-full transition-all duration-200"
           >
             ดูทั้งหมด
@@ -447,7 +447,7 @@ function HerbsNews({ data }: { data: Article[] }) {
                 return (
                   <div
                     key={item.id}
-                    onClick={() => router.push(`/api/articles/${item.id}`)}
+                    onClick={() => router.push(`/articles/${item.id}`)}
                     className="shrink-0 w-40 snap-start group cursor-pointer h-full"
                   >
                     <div className="flex flex-col bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300 h-full">
