@@ -252,6 +252,11 @@ export default function ProfilePage() {
             {items.map((item, index) => (
               <div
                 key={item.label}
+                onClick={() => {
+                  if (item.label === "บทความที่บันทึก") {
+                    router.push("/profile/saved-articles");
+                  }
+                }}
                 className={`flex items-center justify-between px-4 py-3.5 hover:bg-green-50/50 cursor-pointer transition-colors ${
                   index !== items.length - 1 ? "border-b border-green-100" : ""
                 }`}
