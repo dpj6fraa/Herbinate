@@ -289,3 +289,49 @@ func GetArticleBookmarkStatus(c *fiber.Ctx) error {
 
 	return c.JSON(fiber.Map{"bookmarked": existing.Status})
 }
+
+func GetAllBookmarkedArticles(c *fiber.Ctx) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	userID := middleware.GetUserID(c)
+	if userID == primitive.NilObjectID {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Unauthorized"})
+	}
+
+	collection := database.GetCollection(articleBookmarkCollection)
+
+	cursor, err := collection.Find(ctx, bson.M{"user_id": userID, "status": true})
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+	defer cursor.Close(ctx)
+
+	var bookmarks []models.ArticleBookmark
+	if err := cursor.All(ctx, &bookmarks); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	if len(bookmarks) == 0 {
+		return c.JSON([]models.Article{})
+	}
+
+	var articleIDs []primitive.ObjectID
+	for _, b := range bookmarks {
+		articleIDs = append(articleIDs, b.ArticleID)
+	}
+
+	articleColl := database.GetCollection(articleCollection)
+	articleCursor, err := articleColl.Find(ctx, bson.M{"_id": bson.M{"$in": articleIDs}})
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+	defer articleCursor.Close(ctx)
+
+	var articles []models.Article
+	if err := articleCursor.All(ctx, &articles); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	return c.JSON(articles)
+}

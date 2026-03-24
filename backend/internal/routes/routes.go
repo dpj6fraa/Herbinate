@@ -70,6 +70,7 @@ func SetupRoutes(app *fiber.App) {
 	articles := api.Group("/articles")
 	articles.Get("/", handlers.GetAllArticles)
 	articles.Get("/search", handlers.SearchArticleByTag)
+	articles.Get("/bookmarks", middleware.AuthMiddleware(), handlers.GetAllBookmarkedArticles)
 	articles.Get("/:id", handlers.GetArticleByID)
 	articles.Post("/", middleware.AuthMiddleware(), handlers.CreateArticle)
 	articles.Put("/:id", middleware.AuthMiddleware(), handlers.UpdateArticle)

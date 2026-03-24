@@ -1,64 +1,55 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
-// Mock data based on the screenshot
-const mockArticles = [
-  {
-    id: 1,
-    title: "ขมิ้นชัน สมุนไพรทองคำ บำรุงตับและลดการอักเสบ",
-    tag: "สมุนไพรรักษาโรค",
-    image: "/default_profile_picture.png",
-    timestamp: "2 ชั่วโมงที่แล้ว",
-  },
-  {
-    id: 2,
-    title: "ฟ้าทะลายโจร ต้านหวัด ลดไข้ และเสริมภูมิคุ้มกัน",
-    tag: "สมุนไพรรักษาโรค",
-    image: "/default_profile_picture.png",
-    timestamp: "2 ชั่วโมงที่แล้ว",
-  },
-  {
-    id: 3,
-    title: "ใบบัวบก ช่วยความจำ ลดรอยช้ำใน แก้ร้อนใน",
-    tag: "สมุนไพรบำรุง",
-    image: "/default_profile_picture.png",
-    timestamp: "2 วันที่แล้ว",
-  },
-  {
-    id: 4,
-    title: "ว่านหางจระเข้ มอยส์เจอร์ไรเซอร์ธรรมชาติ รักษาแผลพุพอง",
-    tag: "สมุนไพรบำรุง",
-    image: "/default_profile_picture.png",
-    timestamp: "2 วันที่แล้ว",
-  },
-  {
-    id: 5,
-    title: "ตะไคร้ หอมสดชื่น ขับลม แก้ท้องอืดท้องเฟ้อ",
-    tag: "สมุนไพรบำรุง",
-    image: "/default_profile_picture.png",
-    timestamp: "1 ธ.ค. 2568",
-  },
-  {
-    id: 6,
-    title: "กระชายขาว ราชาสมุนไพร บำรุงร่างกายและกระดูก",
-    tag: "สมุนไพรรักษาโรค",
-    image: "/default_profile_picture.png",
-    timestamp: "1 ธ.ค. 2568",
-  }
-];
+interface Article {
+  id: string;
+  title: string;
+  description: string;
+  tags: string[];
+  image_url: string;
+  created_at: string;
+}
 
 export default function SavedArticlesPage() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState("ทั้งหมด");
+  const [articles, setArticles] = useState<Article[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const filters = ["ทั้งหมด", "สมุนไพรรักษาโรค", "สมุนไพรบำรุง"];
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      router.push("/login");
+      return;
+    }
 
-  const filteredArticles = mockArticles.filter(article => {
+    fetch("http://localhost:8080/api/articles/bookmarks", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+      .then(async (res) => {
+        if (!res.ok) throw new Error("failed to fetch bookmarks");
+        return res.json();
+      })
+      .then((data) => {
+        setArticles(data || []);
+      })
+      .catch((error) => {
+        console.error(error);
+      })
+      .finally(() => setLoading(false));
+  }, [router]);
+
+  const allTags = Array.from(new Set(articles.flatMap(a => a.tags || [])));
+  const filters = ["ทั้งหมด", ...allTags];
+
+  const filteredArticles = articles.filter(article => {
     const matchesSearch = article.title.includes(searchQuery);
-    const matchesFilter = activeFilter === "ทั้งหมด" || article.tag === activeFilter;
+    const matchesFilter = activeFilter === "ทั้งหมด" || (article.tags && article.tags.includes(activeFilter));
     return matchesSearch && matchesFilter;
   });
 
@@ -109,39 +100,53 @@ export default function SavedArticlesPage() {
 
         {/* Articles List */}
         <div className="flex flex-col gap-4 mt-2">
-          {filteredArticles.map(article => (
-            <div key={article.id} className="bg-[#EEFFE5] border border-[#d2eac5] rounded-xl overflow-hidden flex flex-col">
-              <div className="p-3 flex gap-3">
-                <div className="w-16 h-16 rounded-full overflow-hidden bg-white shrink-0 border border-green-100 flex items-center justify-center">
-                  <img src={article.image} alt={article.title} className="object-cover w-full h-full" />
-                </div>
-                <div className="flex-1 flex flex-col justify-start pt-1">
-                  <h3 className="text-sm font-medium text-gray-900 leading-snug pr-1">
-                    {article.title}
-                  </h3>
-                  <div className="flex items-center justify-between mt-auto pt-2">
-                    <span className="bg-[#CFF3C5] text-black text-[11px] px-2.5 py-0.5 rounded-full border border-green-200">
-                      {article.tag}
-                    </span>
-                    <div className="flex gap-1.5 shrink-0">
-                      <button className="bg-[#71CE61] text-white text-[12px] px-3 py-1 rounded-md hover:bg-[#61b852] transition-colors flex items-center shadow-sm cursor-pointer">
-                        View
-                      </button>
-                      <button className="bg-[#71CE61] text-white text-[12px] px-2.5 py-1 rounded-md hover:bg-[#61b852] transition-colors flex items-center gap-1 shadow-sm cursor-pointer">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2M10 11v6M14 11v6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                        Delete
-                      </button>
+          {loading ? (
+            <div className="flex justify-center items-center py-10">
+              <div className="w-8 h-8 border-[3px] border-green-400 border-t-transparent rounded-full animate-spin"></div>
+            </div>
+          ) : filteredArticles.length > 0 ? (
+            filteredArticles.map(article => (
+              <div key={article.id} className="bg-[#EEFFE5] border border-[#d2eac5] rounded-xl overflow-hidden flex flex-col">
+                <div className="p-3 flex gap-3">
+                  <div className="w-16 h-16 rounded-full overflow-hidden bg-white shrink-0 border border-green-100 flex items-center justify-center">
+                    <img src={article.image_url ? (article.image_url.startsWith('http') ? article.image_url : `http://localhost:8080${article.image_url}`) : "/default_profile_picture.png"} alt={article.title} className="object-cover w-full h-full" />
+                  </div>
+                  <div className="flex-1 flex flex-col justify-start pt-1">
+                    <h3 className="text-sm font-medium text-gray-900 leading-snug pr-1">
+                      {article.title}
+                    </h3>
+                    <div className="flex items-center justify-between mt-auto pt-2">
+                      {article.tags && article.tags.length > 0 ? (
+                        <span className="bg-[#CFF3C5] text-black text-[11px] px-2.5 py-0.5 rounded-full border border-green-200">
+                          {article.tags[0]}
+                        </span>
+                      ) : (
+                        <span className="bg-[#CFF3C5] text-black text-[11px] px-2.5 py-0.5 rounded-full border border-green-200 opacity-0">
+                          ไม่มีแท็ก
+                        </span>
+                      )}
+                      <div className="flex gap-1.5 shrink-0">
+                        <button onClick={() => router.push(`/articles/${article.id}`)} className="bg-[#71CE61] text-white text-[12px] px-3 py-1 rounded-md hover:bg-[#61b852] transition-colors flex items-center shadow-sm cursor-pointer">
+                          View
+                        </button>
+                        <button className="bg-[#71CE61] text-white text-[12px] px-2.5 py-1 rounded-md hover:bg-[#61b852] transition-colors flex items-center gap-1 shadow-sm cursor-pointer">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2M10 11v6M14 11v6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                          Delete
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
+                <div className="bg-[#e4F8D3] px-4 py-2 text-[12px] text-gray-500 border-t border-[#d2eac5]">
+                  {new Date(article.created_at).toLocaleDateString('th-TH', { year: 'numeric', month: 'short', day: 'numeric' })}
+                </div>
               </div>
-              <div className="bg-[#e4F8D3] px-4 py-2 text-[12px] text-gray-500 border-t border-[#d2eac5]">
-                {article.timestamp}
-              </div>
-            </div>
-          ))}
+            ))
+          ) : (
+            <div className="text-center text-gray-500 py-10">ไม่มีบทความที่บันทึกไว้</div>
+          )}
         </div>
       </div>
     </div>
