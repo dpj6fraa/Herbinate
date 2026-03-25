@@ -169,7 +169,7 @@ export default function Nav() {
           {/* เปรียบเทียบ */}
           <div className="flex flex-col items-center mt-3 sm:mt-4 md:mt-5 cursor-pointer">
             <Link
-              href="#"
+              href="/compare"
               className={`flex flex-col items-center cursor-pointer gap-0.5 group transition-colors duration-300 ${isActive('/compare') ? 'text-[#1C7D29]' : 'text-gray-500 hover:text-[#1C7D29]'}`}
             >
               <svg className={`w-[22px] h-[22px] transition-transform duration-300 ${isActive('/compare') ? '-translate-y-1' : 'group-hover:-translate-y-1'}`} viewBox="0 0 400 450" fill="none" xmlns="http://www.w3.org/2000/svg">

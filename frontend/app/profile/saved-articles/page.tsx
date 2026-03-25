@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Nav from "../../components/Nav";
 
 interface Article {
   id: string;
@@ -55,6 +56,7 @@ export default function SavedArticlesPage() {
 
   return (
     <div className="min-h-svh bg-white flex flex-col pb-8">
+      <Nav />
       {/* Header */}
       <div className="flex items-center gap-3 p-4 pt-6 sticky top-0 bg-white z-10">
         <button onClick={() => router.back()} className="p-1 hover:bg-gray-100 rounded-full transition-colors cursor-pointer">
