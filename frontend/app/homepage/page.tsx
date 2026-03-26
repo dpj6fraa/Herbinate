@@ -8,7 +8,8 @@ import { Menu } from "lucide-react";
 import Nav from "../components/Nav";
 import Footer from "../components/Footer";
 
-const API = "http://localhost:8080";
+const API = process.env.NEXT_PUBLIC_API_URL;
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL;
 
 // ==========================================
 // 1. Interfaces
@@ -268,7 +269,7 @@ function Tools() {
       <div className="bg-white py-4">
         <div className="max-w-150 mx-auto px-4">
           <div className="grid grid-cols-2 gap-2.5">
-            <Link href="/aisearch/image" className="flex flex-col justify-center border border-gray-300 p-3 rounded-xl bg-green-50/50 hover:bg-green-50 transition-colors duration-200">
+            <Link href="/Image/Search" className="flex flex-col justify-center border border-gray-300 p-3 rounded-xl bg-green-50/50 hover:bg-green-50 transition-colors duration-200">
               <div className="flex justify-start items-center gap-2">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M2 7V3C2 2.44772 2.44772 2 3 2H7" stroke="black" strokeWidth={2} strokeLinecap="round" />
@@ -313,7 +314,7 @@ function Tools() {
               <p className="text-[10px] text-gray-600 mt-1.5">ชุมชนผู้ใช้สมุนไพร</p>
             </Link>
 
-            <div className="flex flex-col justify-center border border-gray-300 p-3 rounded-xl bg-green-50/50 hover:bg-green-50 transition-colors duration-200 cursor-pointer">
+            <Link href="/compare" className="flex flex-col justify-center border border-gray-300 p-3 rounded-xl bg-green-50/50 hover:bg-green-50 transition-colors duration-200 cursor-pointer">
               <div className="flex justify-start items-center gap-2">
                 <svg width="18" height="18" viewBox="0 0 400 450" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <g transform="scale(1.2) translate(-35, -20)">
@@ -332,7 +333,7 @@ function Tools() {
                 <h3 className="text-xs text-gray-800 font-medium">Compare</h3>
               </div>
               <p className="text-[10px] text-gray-600 mt-1.5">เปรียบเทียบสรรพคุณ</p>
-            </div>
+             </Link>
           </div>
         </div>
       </div>
@@ -373,7 +374,7 @@ function PopularHerbs({ data }: { data: Herb[] }) {
           <div className="overflow-x-auto scrollbar-hide snap-x snap-mandatory px-4">
             <div className="flex gap-4" style={{ width: "max-content" }}>
               {data?.map((item) => {
-                const imgSource = item.image_url ? `${API}${item.image_url}` : "/placeholder.png";
+                const imgSource = item.image_url ? `${BASE_URL}${item.image_url}` : "/placeholder.png";
 
                 return (
                   <div
@@ -442,7 +443,7 @@ function HerbsNews({ data }: { data: Article[] }) {
           <div className="overflow-x-auto scrollbar-hide snap-x snap-mandatory px-4">
             <div className="flex gap-4" style={{ width: "max-content" }}>
               {data?.map((item) => {
-                const imgSource = item.image_url ? `${API}${item.image_url}` : "/placeholder.png";
+                const imgSource = item.image_url ? `${BASE_URL}${item.image_url}` : "/placeholder.png";
 
                 return (
                   <div
@@ -488,8 +489,8 @@ function HomeContent() {
 
   useEffect(() => {
     Promise.all([
-      fetch(`${API}/api/herbs`).then(res => res.json()),
-      fetch(`${API}/api/articles`).then(res => res.json())
+      fetch(`${API}/herbs`).then(res => res.json()),
+      fetch(`${API}/articles`).then(res => res.json())
     ])
       .then(([herbsData, articlesData]) => {
         setHerbs(herbsData.slice(0, 10));

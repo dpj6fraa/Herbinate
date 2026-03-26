@@ -152,7 +152,7 @@ async function sharePost(postID: string) {
       {/* ➕ Floating Create Post */}
         <button
           onClick={() => router.push("/create-post")}
-          className="fixed bottom-6 right-6 w-14 h-14 rounded-full bg-[#71CE61] text-white text-3xl shadow-lg flex items-center justify-center"
+          className="fixed bottom-6 right-6 w-14 h-14 rounded-full bg-[#71CE61] hover:bg-[#5da84d] text-white text-3xl shadow-lg flex items-center justify-center"
         >
           +
         </button>

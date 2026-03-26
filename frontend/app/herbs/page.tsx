@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import Nav from "../components/Nav";
 import Footer from "../components/Footer";
 
-const API = "http://localhost:8080";
+const API = process.env.NEXT_PUBLIC_API_URL;
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL;
 
 type Herb = {
   id: string;
@@ -21,7 +22,7 @@ function HerbCards({ data }: { data: Herb[] }) {
   return (
     <>
       {data?.map((item) => {
-        const imgSource = item.image_url ? `${API}${item.image_url}` : null;
+        const imgSource = item.image_url ? `${BASE_URL}${item.image_url}` : "/placeholder.png";
 
         return (
           <div

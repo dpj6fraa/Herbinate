@@ -66,7 +66,8 @@ export default function AiImagePage() {
   return (
     <>
       <Nav />
-      <div className="min-h-screen bg-gradient-to-br from-green-50 to-green-100 flex items-center justify-center p-4">
+      {/* 1. แก้พื้นหลังให้เป็นขาว (ลบ bg-gradient และ from/to green ออก) */}
+      <div className="min-h-screen bg-white flex items-start justify-center p-4 pt-20">
         <div className="w-full max-w-2xl">
           {/* Header */}
           <div className="text-center mb-8">
@@ -76,7 +77,7 @@ export default function AiImagePage() {
           </div>
 
           {/* Upload Card */}
-          <div className="bg-white rounded-2xl shadow-xl p-8 md:p-12">
+          <div className="bg-white rounded-2xl shadow-xl p-8 md:p-12 border border-gray-100">
             <div className="border-4 border-dashed border-green-200 rounded-xl p-12 text-center bg-green-50/30 hover:bg-green-50/50 transition-colors">
               {/* Upload Icon */}
               {!previewUrl && !isUploading && (
@@ -119,7 +120,7 @@ export default function AiImagePage() {
                     <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30 rounded-lg">
                       <div className="w-16 h-16 rounded-full bg-white shadow-lg flex items-center justify-center">
                         <svg
-                          className="animate-spin h-10 w-10 text-green-600"
+                          className="animate-spin h-10 w-10 text-lime-600"
                           xmlns="http://www.w3.org/2000/svg"
                           fill="none"
                           viewBox="0 0 24 24"
@@ -173,25 +174,26 @@ export default function AiImagePage() {
 
               {/* Buttons */}
               {!isUploading && (
-                <>
-                  {/* Select File Button */}
+                <div className="flex justify-center gap-4">
+                  {/* 3. เปลี่ยนสีปุ่มเป็นเขียวอ่อน (lime) */}
                   <button
                     onClick={handleButtonClick}
-                    className="bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-8 rounded-lg shadow-md transition-all duration-200 transform hover:scale-105 active:scale-95"
+                    className="bg-[#71CE61] hover:bg-[#5da84d]  text-white font-semibold py-3 px-8 rounded-lg shadow-md transition-all duration-200 transform hover:scale-105 active:scale-95"
                   >
                     {selectedFile ? 'เลือกใหม่' : 'เลือกไฟล์'}
                   </button>
 
                   {/* Upload Button (shown when file is selected) */}
                   {selectedFile && (
+                    /* 3. เปลี่ยนสีปุ่มอัพโหลดเป็นเขียวที่เข้มขึ้น (emerald) แต่ไม่เขียวเข้ม */
                     <button
                       onClick={handleUpload}
-                      className="ml-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-8 rounded-lg shadow-md transition-all duration-200 transform hover:scale-105 active:scale-95"
+                      className="bg-[#71CE61] hover:bg-[#5da84d]  text-white font-semibold py-3 px-8 rounded-lg shadow-md transition-all duration-200 transform hover:scale-105 active:scale-95"
                     >
                       อัพโหลด
                     </button>
                   )}
-                </>
+                </div>
               )}
             </div>
 
@@ -202,17 +204,8 @@ export default function AiImagePage() {
             </div>
           </div>
 
-          {/* Back Button */}
-          {!isUploading && (
-            <div className="text-center mt-6">
-              <button
-                onClick={() => router.back()}
-                className="text-gray-600 hover:text-gray-800 underline"
-              >
-                ← กลับ
-              </button>
-            </div>
-          )}
+          {/* 2. เอาปุ่ม "กลับ" ออก (ลบโค้ดส่วน Back Button ทั้งหมด) */}
+          
         </div>
       </div>
       <Footer />
