@@ -74,6 +74,9 @@ export default function AiImagePage() {
             <h1 className="text-4xl font-bold text-gray-800 mb-2">
               AI ค้นหาสมุนไพรจากภาพ
             </h1>
+            <p className="text-gray-600 text-lg">
+              อัพโหลดภาพสมุนไพรที่คุณไม่รู้จักเพื่อให้ AI ช่วยวิเคราะห์
+            </p>
           </div>
 
           {/* Upload Card */}
