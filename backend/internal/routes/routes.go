@@ -57,14 +57,33 @@ func SetupRoutes(app *fiber.App) {
 	posts.Get("/comments", postHandler.GetComments)
 	posts.Post("/share", middleware.AuthMiddleware(), postHandler.SharePost)
 	posts.Delete("/delete", middleware.AuthMiddleware(), postHandler.DeletePost)
+	posts.Delete("/comment", middleware.AuthMiddleware(), postHandler.DeleteComment)
+	posts.Put("/edit", middleware.AuthMiddleware(), postHandler.EditPost)
+	posts.Get("/my-comments", middleware.AuthMiddleware(), postHandler.GetMyComments)
+	// Routes สำหรับ Bookmark Posts
+	posts.Post("/bookmark", middleware.AuthMiddleware(), postHandler.ToggleBookmarkPost)
+	posts.Get("/bookmark/status", middleware.AuthMiddleware(), postHandler.GetPostBookmarkStatus)
 
-	// Herbs routes
-	api.Get("/herbs", handlers.GetAllHerbs)
-	api.Get("/herbs/:id", handlers.GetHerbByID)
-	api.Post("/herbs", handlers.CreateHerb)
-	api.Put("/herbs/:id", handlers.UpdateHerb)
-	api.Delete("/herbs/:id", handlers.DeleteHerb)
-	api.Get("/herbs/search", handlers.SearchByTag)
+	// ==========================================
+	// Herbs Routes
+	// ==========================================
+	herbs := api.Group("/herbs")
+	herbs.Get("/", handlers.GetAllHerbs)
+	herbs.Get("/search", handlers.SearchByTag)
+
+	// 🌟 เพิ่ม Routes สำหรับ Bookmark (ต้อง Login)
+	herbs.Get("/bookmarks", middleware.AuthMiddleware(), handlers.GetAllBookmarkedHerbs)
+
+	// Routes ที่รับ :id ต้องอยู่หลัง /search และ /bookmarks
+	herbs.Get("/:id", handlers.GetHerbByID)
+	herbs.Post("/", handlers.CreateHerb) // ถ้าอยากล็อคให้เฉพาะแอดมินสร้างได้ อย่าลืมใส่ AuthMiddleware นะครับ
+	herbs.Put("/:id", handlers.UpdateHerb)
+	herbs.Delete("/:id", handlers.DeleteHerb)
+
+	// 🌟 เพิ่ม Routes จัดการ Bookmark ของสมุนไพรแต่ละตัว (ต้อง Login)
+	herbs.Post("/:id/bookmark", middleware.AuthMiddleware(), handlers.ToggleBookmarkHerb)
+	herbs.Get("/:id/bookmark", middleware.AuthMiddleware(), handlers.GetHerbBookmarkStatus)
+	posts.Get("/bookmarks", middleware.AuthMiddleware(), postHandler.GetAllBookmarkedPosts)
 
 	// Articles
 	articles := api.Group("/articles")
@@ -80,6 +99,7 @@ func SetupRoutes(app *fiber.App) {
 
 	// User route — ต้อง login
 	api.Post("/reports", middleware.AuthMiddleware(), handlers.CreateReport)
+	api.Get("/reports/my-reports", middleware.AuthMiddleware(), handlers.GetMyReports)
 
 	// Admin routes — ต้อง login + เป็น admin
 	admin := api.Group("/admin", middleware.AuthMiddleware() /*, middleware.AdminRequired */)

@@ -1,17 +1,25 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Image from "next/image";
 import Footer from "@/app/components/Footer";
 import Nav from "../components/Nav";
 import { useRouter } from "next/navigation";
+import { 
+  Bookmark, 
+  BookOpen, 
+  FileText, 
+  MessageSquare, 
+  AlertTriangle,
+  PencilLine
+} from "lucide-react"; // 🌟 Import Icons สไตล์ Minimal
 
-const items = [
-  { label: "บทความที่บันทึก", count: 0 },
-  { label: "ประวัติโพสในชุมชนที่ถูกใจ", count: 0 },
-  { label: "จัดการความคิดเห็น", count: 0 },
-  { label: "ประวัติการค้นหาสรรพคุณสมุนไพร", count: 0 },
-  { label: "ประวัติการค้นหาสมุนไพร", count: 0 },
+// 🌟 อัปเดตรายการเมนูตามที่คุณต้องการ
+const menuItems = [
+  { label: "สมุนไพรที่บันทึก", icon: Bookmark, path: "/profile/saved-herbs", count: 0 },
+  { label: "บทความที่บันทึก", icon: BookOpen, path: "/profile/saved-articles", count: 0 },
+  { label: "โพสต์ที่บันทึก", icon: FileText, path: "/profile/saved-posts", count: 0 },
+  { label: "ประวัติคอมเมนต์", icon: MessageSquare, path: "/profile/comments", count: 0 },
+  { label: "การรายงาน", icon: AlertTriangle, path: "/profile/reports", count: 0 },
 ];
 
 export default function ProfilePage() {
@@ -21,12 +29,12 @@ export default function ProfilePage() {
   const [isEditing, setIsEditing] = useState(false);
 
   const [username, setUsername] = useState("");
-  const [originalUsername, setOriginalUsername] = useState(""); // เก็บชื่อเดิมไว้เผื่อต้อง Reset ถ้า Error
+  const [originalUsername, setOriginalUsername] = useState(""); 
   const [email, setEmail] = useState("");
 
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
-  const [errorMsg, setErrorMsg] = useState(""); // 🌟 เพิ่ม State สำหรับเก็บข้อความ Error ชื่อซ้ำ
+  const [errorMsg, setErrorMsg] = useState(""); 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -47,7 +55,7 @@ export default function ProfilePage() {
       })
       .then((data) => {
         setUsername(data.username);
-        setOriginalUsername(data.username); // จำชื่อตั้งต้นไว้
+        setOriginalUsername(data.username); 
         setEmail(data.email);
         setProfileImage(data.profile_image_url);
       })
@@ -72,7 +80,6 @@ export default function ProfilePage() {
 
     const token = localStorage.getItem("token");
 
-    // โชว์ Loading ตรงรูปโปรไฟล์ได้ถ้าต้องการ (หรือเปลี่ยนรูปเป็นสีเทาๆ)
     const res = await fetch("http://localhost:8080/api/users/profile-image", {
       method: "POST",
       headers: { Authorization: `Bearer ${token}` },
@@ -86,7 +93,6 @@ export default function ProfilePage() {
   }
 
   async function saveUsername() {
-    // ถ้าไม่ได้แก้ หรือลบจนว่าง ให้คืนค่ากลับเป็นชื่อเดิม
     if (!username.trim() || username === originalUsername) {
       setUsername(originalUsername);
       setIsEditing(false);
@@ -95,7 +101,7 @@ export default function ProfilePage() {
     }
 
     setSaving(true);
-    setErrorMsg(""); // ล้าง Error เก่าก่อน
+    setErrorMsg(""); 
     const token = localStorage.getItem("token");
 
     try {
@@ -111,18 +117,15 @@ export default function ProfilePage() {
       const data = await res.json();
 
       if (res.status === 409) {
-        // ❌ ชื่อซ้ำ
         setErrorMsg(data.error || "ชื่อผู้ใช้นี้ถูกใช้งานแล้ว");
-        setUsername(originalUsername); // คืนค่าชื่อเดิมกลับมาโชว์
-        setIsEditing(false); // ปิดโหมดแก้ไข
+        setUsername(originalUsername); 
+        setIsEditing(false); 
       } else if (!res.ok) {
-        // ❌ Error อื่นๆ
         setErrorMsg("ไม่สามารถเปลี่ยนชื่อได้");
         setUsername(originalUsername);
         setIsEditing(false);
       } else {
-        // ✅ เปลี่ยนสำเร็จ
-        setOriginalUsername(username.trim()); // อัปเดตชื่อเดิมให้เป็นชื่อใหม่
+        setOriginalUsername(username.trim()); 
         setIsEditing(false);
         window.dispatchEvent(new Event("profile-updated"));
       }
@@ -135,7 +138,6 @@ export default function ProfilePage() {
     }
   }
 
-  // เคลียร์ Error เวลากดเริ่มแก้ไขใหม่
   const startEditing = () => {
     setErrorMsg("");
     setIsEditing(true);
@@ -143,146 +145,147 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <div className="min-h-svh flex items-center justify-center text-gray-600">
+      <div className="min-h-svh flex items-center justify-center text-gray-600 bg-white">
         <div className="w-8 h-8 border-[3px] border-green-400 border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-svh bg-white flex flex-col">
+    <div className="min-h-svh bg-gray-50 flex flex-col">
       <Nav />
 
-      <div className="flex-1 px-4 py-4">
-        <div className="max-w-sm mx-auto mt-4">
-          <h1 className="text-xl font-semibold text-black mb-4">
+      <div className="flex-1 px-4 py-6">
+        <div className="max-w-md mx-auto">
+          <h1 className="text-2xl font-bold text-gray-800 mb-6 text-center">
             บัญชีของฉัน
           </h1>
 
           {/* Profile Card */}
-          <div className="bg-[#EEFFE5] rounded-xl p-6 mb-4 shadow-sm border border-green-50">
-            <div className="flex flex-col items-center text-center">
-
-              <div
-                onClick={() => fileInputRef.current?.click()}
-                className="relative w-24 h-24 mb-4 rounded-full cursor-pointer group"
-              >
-                <img
-                  src={
-                    profileImage
-                      ? `http://localhost:8080${profileImage}`
-                      : "/default_profile_picture.png"
-                  }
-                  className="w-full h-full rounded-full object-cover shadow-md"
-                  alt="Profile"
-                />
-
-                {/* Green highlight & Overlay text */}
-                <div className="absolute inset-0 rounded-full bg-black/0 group-hover:bg-black/20 ring-0 group-hover:ring-4 ring-[#71CE61] transition-all flex items-center justify-center">
-                  <span className="text-white text-xs opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-md font-medium">เปลี่ยนรูป</span>
-                </div>
-              </div>
-
-              <input
-                type="file"
-                accept="image/*"
-                ref={fileInputRef}
-                onChange={handleImageChange}
-                className="hidden"
+          <div className="bg-white rounded-2xl p-6 mb-6 shadow-sm border border-gray-100 flex flex-col items-center">
+            <div
+              onClick={() => fileInputRef.current?.click()}
+              className="relative w-28 h-28 mb-5 rounded-full cursor-pointer group"
+            >
+              <img
+                src={
+                  profileImage
+                    ? `http://localhost:8080${profileImage}`
+                    : "/default_profile_picture.png"
+                }
+                className="w-full h-full rounded-full object-cover shadow-sm border-4 border-green-50"
+                alt="Profile"
               />
+              <div className="absolute inset-0 rounded-full bg-black/0 group-hover:bg-black/30 transition-all flex items-center justify-center">
+                <span className="text-white text-xs opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-md font-medium">เปลี่ยนรูป</span>
+              </div>
+            </div>
 
-              <div className="flex flex-col items-center gap-1 w-full relative">
-                <div className="flex items-center justify-center gap-2 w-full h-8">
-                  {isEditing ? (
-                    <input
-                      value={username}
-                      autoFocus
-                      disabled={saving}
-                      onChange={(e) => setUsername(e.target.value)}
-                      onBlur={saveUsername} // บันทึกเมื่อคลิกที่อื่น
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") saveUsername();
-                        if (e.key === "Escape") {
-                          setUsername(originalUsername); // กดยกเลิก
-                          setIsEditing(false);
-                        }
-                      }}
-                      className="
-                        text-base text-black font-semibold text-center
-                        bg-[#CFF3C5] px-2 py-1 rounded-md
-                        border border-[#71CE61] outline-none
-                        focus:ring-2 focus:ring-[#71CE61] w-3/4
-                        disabled:opacity-50 transition-all
-                      "
-                    />
-                  ) : (
-                    <>
-                      <span className={`text-lg font-semibold text-black ${saving ? 'opacity-50 animate-pulse' : ''}`}>
-                        {saving ? "กำลังบันทึก..." : username}
-                      </span>
-                      {!saving && (
-                        <button
-                          onClick={startEditing}
-                          className="w-5 h-5 opacity-40 hover:opacity-100 cursor-pointer transition-opacity flex items-center justify-center"
-                          title="แก้ไขชื่อผู้ใช้"
-                        >
-                          <Image src="/globe.svg" alt="edit" width={14} height={14} />
-                        </button>
-                      )}
-                    </>
-                  )}
-                </div>
+            <input
+              type="file"
+              accept="image/*"
+              ref={fileInputRef}
+              onChange={handleImageChange}
+              className="hidden"
+            />
 
-                {/* 🌟 แสดง Error Message สีแดงถ้าชื่อซ้ำ */}
-                <div className="h-4 mt-1">
-                  {errorMsg && (
-                    <span className="text-xs text-red-500 font-medium animate-pulse">
-                      {errorMsg}
+            <div className="flex flex-col items-center w-full">
+              <div className="flex items-center justify-center gap-2 w-full h-8 mb-1">
+                {isEditing ? (
+                  <input
+                    value={username}
+                    autoFocus
+                    disabled={saving}
+                    onChange={(e) => setUsername(e.target.value)}
+                    onBlur={saveUsername}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") saveUsername();
+                      if (e.key === "Escape") {
+                        setUsername(originalUsername);
+                        setIsEditing(false);
+                      }
+                    }}
+                    className="
+                      text-lg text-black font-bold text-center
+                      bg-green-50 px-3 py-1.5 rounded-lg
+                      border border-green-400 outline-none
+                      focus:ring-2 focus:ring-green-200 w-3/4
+                      disabled:opacity-50 transition-all
+                    "
+                  />
+                ) : (
+                  <div className="flex items-center gap-2 group">
+                    <span className={`text-xl font-bold text-gray-800 tracking-tight ${saving ? 'opacity-50 animate-pulse' : ''}`}>
+                      {saving ? "กำลังบันทึก..." : username}
                     </span>
-                  )}
-                </div>
+                    {!saving && (
+                      <button
+                        onClick={startEditing}
+                        className="p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-full transition-all"
+                        title="แก้ไขชื่อผู้ใช้"
+                      >
+                        <PencilLine className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
 
-              <div className="text-xs text-gray-500 mt-1 bg-white/50 px-3 py-1 rounded-full">{email}</div>
+              {/* Error Message */}
+              <div className="h-5">
+                {errorMsg && (
+                  <span className="text-xs text-red-500 font-medium">
+                    {errorMsg}
+                  </span>
+                )}
+              </div>
+
+              <div className="text-sm font-medium text-gray-500 bg-gray-100 px-4 py-1.5 rounded-full mt-2">
+                {email}
+              </div>
             </div>
           </div>
 
-          {/* Account Data (ยังไม่ต่อ DB) */}
-          <div className="bg-[#EEFFE5] border border-green-50 shadow-sm rounded-xl overflow-hidden mb-5">
-            {items.map((item, index) => (
-              <div
-                key={item.label}
-                onClick={() => {
-                  if (item.label === "บทความที่บันทึก") {
-                    router.push("/profile/saved-articles");
-                  }
-                }}
-                className={`flex items-center justify-between px-4 py-3.5 hover:bg-green-50/50 cursor-pointer transition-colors ${index !== items.length - 1 ? "border-b border-green-100" : ""
+          {/* Account Menu */}
+          <div className="bg-white border border-gray-100 shadow-sm rounded-2xl overflow-hidden mb-8">
+            {menuItems.map((item, index) => {
+              const Icon = item.icon;
+              return (
+                <div
+                  key={item.label}
+                  onClick={() => {
+                    if (item.path) router.push(item.path);
+                  }}
+                  className={`flex items-center justify-between px-5 py-4 hover:bg-gray-50 cursor-pointer transition-all active:scale-[0.99] ${
+                    index !== menuItems.length - 1 ? "border-b border-gray-100" : ""
                   }`}
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-[#CFF3C5] flex items-center justify-center">
-                    <Image src="/globe.svg" alt="icon" width={16} height={16} />
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-full bg-green-50 flex items-center justify-center text-green-600">
+                      <Icon className="w-5 h-5" />
+                    </div>
+                    <span className="text-[15px] font-semibold text-gray-700">
+                      {item.label}
+                    </span>
                   </div>
-                  <span className="text-sm font-medium text-gray-800">
-                    {item.label}
-                  </span>
-                </div>
 
-                <div className="flex items-center gap-3">
-                  <span className="px-2.5 py-0.5 text-xs font-semibold text-white bg-[#1C7D29] rounded-full shadow-sm">
-                    {item.count}
-                  </span>
-                  <span className="text-gray-400 text-lg font-light">{">"}</span>
+                  <div className="flex items-center gap-3">
+                    {item.count > 0 && (
+                      <span className="px-2.5 py-0.5 text-xs font-bold text-white bg-green-500 rounded-full shadow-sm">
+                        {item.count}
+                      </span>
+                    )}
+                    <span className="text-gray-300 font-bold">{">"}</span>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           {/* Logout */}
           <button
             onClick={logout}
-            className="w-full py-3 bg-[#71CE61] text-white rounded-xl text-sm font-bold shadow-sm hover:bg-red-500 hover:shadow-md cursor-pointer transition-all duration-300 mb-8"
+            className="w-full py-3.5 bg-white border-2 border-red-100 text-red-500 rounded-2xl text-[15px] font-bold shadow-sm hover:bg-red-50 hover:border-red-200 active:scale-[0.98] transition-all duration-200 mb-8"
           >
             ออกจากระบบ
           </button>

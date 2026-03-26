@@ -2,24 +2,23 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import Nav from "../../components/Nav";
-import Footer from "../../components/Footer"; // ถ้าในไฟล์ไม่มี ให้ลบ import นี้และ <Footer /> ด้านล่างออกนะครับ
+import Nav from "../../components/Nav"; // ปรับ Path ให้ตรงกับโปรเจกต์คุณ
+import Footer from "../../components/Footer"; // ปรับ Path ให้ตรงกับโปรเจกต์คุณ
 
-interface Article {
+interface Herb {
   id: string;
-  title: string;
-  description: string;
+  name: string;
+  scientific_name: string;
   tags: string[];
   image_url: string;
-  created_at: string;
 }
 
-export default function SavedArticlesPage() {
+export default function SavedHerbsPage() {
   const router = useRouter();
-  const [articles, setArticles] = useState<Article[]>([]);
+  const [herbs, setHerbs] = useState<Herb[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // States สำหรับ Search & Tags แบบใหม่
+  // States สำหรับ Search & Tags
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [isTagDropdownOpen, setIsTagDropdownOpen] = useState(false);
@@ -32,17 +31,18 @@ export default function SavedArticlesPage() {
       return;
     }
 
-    fetch("http://localhost:8080/api/articles/bookmarks", {
+    // เรียก API ดึงสมุนไพรที่บุ๊กมาร์กไว้
+    fetch("http://localhost:8080/api/herbs/bookmarks", {
       headers: {
         Authorization: `Bearer ${token}`,
       },
     })
       .then(async (res) => {
-        if (!res.ok) throw new Error("failed to fetch bookmarks");
+        if (!res.ok) throw new Error("failed to fetch bookmarked herbs");
         return res.json();
       })
       .then((data) => {
-        setArticles(data || []);
+        setHerbs(data || []);
       })
       .catch((error) => {
         console.error(error);
@@ -51,7 +51,7 @@ export default function SavedArticlesPage() {
   }, [router]);
 
   // 1. ดึง Tags ทั้งหมดแบบไม่ซ้ำกัน
-  const allTags = Array.from(new Set(articles.flatMap(a => a.tags || [])));
+  const allTags = Array.from(new Set(herbs.flatMap(h => h.tags || [])));
 
   // 2. หาสรรพคุณ/แท็ก ที่ตรงกับคำที่กำลังพิมพ์
   const matchingTags = allTags.filter(tag =>
@@ -84,33 +84,33 @@ export default function SavedArticlesPage() {
   };
 
   // 🌟 ฟังก์ชันลบออกจากบุ๊กมาร์ก (Toggle Bookmark)
-  const handleRemoveBookmark = async (e: React.MouseEvent, articleId: string) => {
-    e.stopPropagation(); // ป้องกันไม่ให้คลิกแล้วเด้งไปหน้าเนื้อหาบทความ
+  const handleRemoveBookmark = async (e: React.MouseEvent, herbId: string) => {
+    e.stopPropagation(); // ป้องกันไม่ให้คลิกแล้วเด้งไปหน้าเนื้อหาสมุนไพร
     const token = localStorage.getItem("token");
     if (!token) return;
 
     try {
-      const res = await fetch(`http://localhost:8080/api/articles/${articleId}/bookmark`, {
+      const res = await fetch(`http://localhost:8080/api/herbs/${herbId}/bookmark`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) {
         // อัปเดต UI ทันทีโดยกรองตัวที่ถูกลบออกไป
-        setArticles(prev => prev.filter(a => a.id !== articleId));
+        setHerbs(prev => prev.filter(h => h.id !== herbId));
       }
     } catch (err) {
       console.error(err);
     }
   };
 
-  // 3. ฟังก์ชันกรองข้อมูลบทความ (Filter)
-  const filteredArticles = articles.filter(article => {
+  // 3. ฟังก์ชันกรองข้อมูลสมุนไพร (Filter)
+  const filteredHerbs = herbs.filter(herb => {
     const matchesSearch =
       searchQuery === "" ||
-      article.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (article.description && article.description.toLowerCase().includes(searchQuery.toLowerCase()));
+      herb.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (herb.scientific_name && herb.scientific_name.toLowerCase().includes(searchQuery.toLowerCase()));
 
-    const matchesTags = selectedTags.length === 0 || selectedTags.every(t => article.tags && article.tags.includes(t));
+    const matchesTags = selectedTags.length === 0 || selectedTags.every(t => herb.tags && herb.tags.includes(t));
 
     return matchesSearch && matchesTags;
   });
@@ -122,14 +122,14 @@ export default function SavedArticlesPage() {
       <div className="flex-1 flex flex-col pt-4 lg:items-center w-full pb-10">
         <div className="flex flex-col items-center justify-center px-4 md:px-6 w-full max-w-4xl">
 
-          {/* Header แบบใหม่ */}
+          {/* Header */}
           <div className="flex items-center justify-start w-full gap-3 mb-2">
             <button onClick={() => router.back()} className="p-2 -ml-2 hover:bg-gray-100 rounded-full transition-colors cursor-pointer text-gray-600">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M19 12H5M5 12L12 19M5 12L12 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </button>
-            <h1 className="text-[20px] md:text-[24px] text-black font-bold">บทความที่บันทึก</h1>
+            <h1 className="text-[20px] md:text-[24px] text-black font-bold">สมุนไพรที่บันทึก</h1>
           </div>
 
           {/* 🌟 ก้อนค้นหาอัจฉริยะ (Smart Search Box) */}
@@ -161,7 +161,7 @@ export default function SavedArticlesPage() {
                     removeTag(selectedTags[selectedTags.length - 1]);
                   }
                 }}
-                placeholder={selectedTags.length === 0 ? "ค้นหาชื่อบทความ หรือเนื้อหา..." : "พิมพ์เพิ่ม..."}
+                placeholder={selectedTags.length === 0 ? "ค้นหาชื่อสมุนไพร หรือสรรพคุณ..." : "พิมพ์เพิ่ม..."}
                 className="flex-1 min-w-[120px] bg-transparent text-sm md:text-base text-gray-800 outline-none px-1"
               />
 
@@ -208,7 +208,7 @@ export default function SavedArticlesPage() {
           {/* Quick Picks */}
           {selectedTags.length === 0 && allTags.length > 0 && (
             <div className="w-full mt-3 flex flex-wrap items-center gap-2 px-1">
-              <span className="text-xs text-gray-400 font-medium mr-1">แท็กที่บันทึกบ่อย:</span>
+              <span className="text-xs text-gray-400 font-medium mr-1">สรรพคุณที่บันทึกบ่อย:</span>
               {allTags.slice(0, 5).map(tag => (
                 <span
                   key={tag}
@@ -227,21 +227,21 @@ export default function SavedArticlesPage() {
           {loading ? (
             <div className="w-full flex flex-col items-center my-10">
               <div className="w-8 h-8 border-[3px] border-green-400 border-t-transparent rounded-full animate-spin mb-4" />
-              <p className="text-gray-500 text-sm animate-pulse">กำลังโหลดบทความ...</p>
+              <p className="text-gray-500 text-sm animate-pulse">กำลังโหลดสมุนไพร...</p>
             </div>
-          ) : filteredArticles.length > 0 ? (
-            filteredArticles.map(article => {
-              const imgSource = article.image_url ? (article.image_url.startsWith('http') ? article.image_url : `http://localhost:8080${article.image_url}`) : "/placeholder.png";
+          ) : filteredHerbs.length > 0 ? (
+            filteredHerbs.map(herb => {
+              const imgSource = herb.image_url ? (herb.image_url.startsWith('http') ? herb.image_url : `http://localhost:8080${herb.image_url}`) : "/placeholder.png";
 
               return (
                 <div
-                  key={article.id}
-                  onClick={() => router.push(`/articles/${article.id}`)}
+                  key={herb.id}
+                  onClick={() => router.push(`/herbs/${herb.id}`)}
                   className="w-[calc(50%-6px)] md:w-64 lg:w-72 flex flex-col rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl bg-[#F7FFF7] border border-green-50 cursor-pointer transition-transform hover:-translate-y-1 hover:scale-[1.02] relative group"
                 >
                   {/* 🌟 ปุ่มถังขยะ (ลบบุ๊กมาร์ก) ซ่อนอยู่มุมขวาบน จะชัดขึ้นตอน Hover */}
                   <button
-                    onClick={(e) => handleRemoveBookmark(e, article.id)}
+                    onClick={(e) => handleRemoveBookmark(e, herb.id)}
                     className="absolute top-2 right-2 bg-white/80 hover:bg-red-50 text-gray-500 hover:text-red-500 p-2 rounded-full z-10 transition-all shadow-sm opacity-80 md:opacity-0 group-hover:opacity-100"
                     title="ลบออกจากรายการบันทึก"
                   >
@@ -252,7 +252,7 @@ export default function SavedArticlesPage() {
 
                   <div className="w-full h-28 md:h-40 overflow-hidden bg-gray-100 flex items-center justify-center shrink-0">
                     {imgSource !== "/placeholder.png" ? (
-                      <img src={imgSource} alt={article.title} className="w-full h-full object-cover" />
+                      <img src={imgSource} alt={herb.name} className="w-full h-full object-cover" />
                     ) : (
                       <span className="text-gray-400 text-xs md:text-sm">ไม่มีรูปภาพ</span>
                     )}
@@ -260,22 +260,19 @@ export default function SavedArticlesPage() {
 
                   <div className="p-3 md:p-4 flex flex-col flex-1 w-full text-left">
                     <h2 className="text-[14px] md:text-[16px] text-black pb-1 md:pb-2 font-medium line-clamp-2 leading-tight">
-                      {article.title}
+                      {herb.name}
                     </h2>
 
-                    <p className="text-[12px] md:text-[13px] text-gray-500 line-clamp-2 mb-2 md:mb-3 mt-1 md:mt-0 flex-1">
-                      {article.description || "ไม่มีคำอธิบายเพิ่มเติม"}
-                    </p>
-
-                    {/* แสดงวันที่ */}
-                    <p className="text-[10px] md:text-[11px] text-gray-400 mb-2">
-                      บันทึกเมื่อ: {new Date(article.created_at).toLocaleDateString('th-TH', { year: 'numeric', month: 'short', day: 'numeric' })}
-                    </p>
+                    {herb.scientific_name && (
+                      <p className="text-[12px] md:text-[13px] text-gray-500 italic line-clamp-2 mb-2 md:mb-3 mt-1 md:mt-0 flex-1">
+                        {herb.scientific_name}
+                      </p>
+                    )}
 
                     {/* Tags */}
-                    {article.tags && article.tags.length > 0 && (
+                    {herb.tags && herb.tags.length > 0 && (
                       <div className="flex gap-1.5 md:gap-2 flex-wrap mt-auto pt-2 border-t border-green-100">
-                        {article.tags.slice(0, 2).map((tag, i) => (
+                        {herb.tags.slice(0, 2).map((tag, i) => (
                           <span
                             key={i}
                             className="text-[9px] md:text-[10px] bg-[#D8F5D0] text-green-800 border border-[#A2F58B] px-1.5 md:px-2 py-0.5 md:py-1 rounded-md whitespace-nowrap"
@@ -294,7 +291,7 @@ export default function SavedArticlesPage() {
               <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-4">
                 <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
               </div>
-              <p className="text-gray-700 text-lg font-bold">ไม่พบบทความที่บันทึกไว้</p>
+              <p className="text-gray-700 text-lg font-bold">ไม่พบสมุนไพรที่บันทึกไว้</p>
               <p className="text-gray-500 text-sm mt-1">ลองเปลี่ยนคำค้นหา หรือลบหมวดหมู่บางอันออกดูนะครับ</p>
               {(searchQuery || selectedTags.length > 0) && (
                 <button
@@ -309,8 +306,7 @@ export default function SavedArticlesPage() {
         </div>
       </div>
 
-      {/* ลบ หรือเก็บ <Footer /> ไว้ตามที่โปรเจกต์ของคุณต้องการได้เลยครับ */}
-      {/* <Footer /> */}
+      <Footer />
     </main>
   );
 }

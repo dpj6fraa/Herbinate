@@ -31,8 +31,10 @@ export default function HerbDetailPage() {
   const [herb, setHerb] = useState<Herb | null>(null);
   const [loading, setLoading] = useState(true);
   const [isReportOpen, setIsReportOpen] = useState(false);
+  const [isSaved, setIsSaved] = useState(false); // เพิ่ม State จัดการ Bookmark
 
   useEffect(() => {
+    // โหลดข้อมูลสมุนไพร
     fetch(`${API}/api/herbs/${params.id}`)
       .then((res) => {
         if (!res.ok) throw new Error("Not found");
@@ -43,7 +45,52 @@ export default function HerbDetailPage() {
         setLoading(false);
       })
       .catch(() => setLoading(false));
+
+    // เช็คสถานะ Bookmark เมื่อโหลดหน้า
+    const token = localStorage.getItem("token");
+    if (token) {
+      fetch(`${API}/api/herbs/${params.id}/bookmark`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+        .then((res) => {
+          if (!res.ok) throw new Error("Not bookmarked or error");
+          return res.json();
+        })
+        .then((data) => {
+          setIsSaved(!!(data.is_bookmarked !== false && data.bookmarked !== false));
+        })
+        .catch(() => {
+          setIsSaved(false);
+        });
+    }
   }, [params.id]);
+
+  // ฟังก์ชันจัดการตอนกดปุ่ม Bookmark
+  const handleBookmark = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        router.push("/login");
+        return;
+      }
+
+      const res = await fetch(`${API}/api/herbs/${params.id}/bookmark`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (res.ok) {
+        setIsSaved(!isSaved);
+      } else {
+        console.error("Failed to bookmark herb");
+      }
+    } catch (error) {
+      console.error("Error bookmarking herb:", error);
+    }
+  };
 
   if (loading) {
     return (
@@ -108,23 +155,41 @@ export default function HerbDetailPage() {
             )}
           </div>
 
-          {/* ชื่อ + ปุ่ม Report */}
+          {/* ชื่อ + ปุ่ม Bookmark & Report */}
           <div className="px-6 pt-6 flex justify-between items-start">
-            <div>
+            <div className="flex-1 pr-4">
               <h1 className="text-2xl font-bold text-gray-800">{herb.name}</h1>
               {herb.scientific_name && (
                 <p className="text-md text-gray-400 italic">{herb.scientific_name}</p>
               )}
             </div>
 
-            {/* Flag icon — SVG มาตรฐาน แทน custom เดิม */}
-            <button
-              onClick={() => setIsReportOpen(true)}
-              title="รายงานข้อมูล"
-              className="p-2 -mr-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-full active:scale-90 transition-all"
-            >
-            <Siren className="w-5 h-5" />
-            </button>
+            {/* กลุ่มปุ่ม Action */}
+            <div className="flex gap-2 flex-shrink-0">
+              <button
+                onClick={handleBookmark}
+                title={isSaved ? "เลิกบันทึกสมุนไพร" : "บันทึกสมุนไพร"}
+                className="p-2 rounded-full hover:bg-green-50 transition-colors cursor-pointer"
+              >
+                <svg
+                  className={`w-6 h-6 ${isSaved ? "text-green-500 fill-green-500" : "text-gray-400"}`}
+                  fill={isSaved ? "currentColor" : "none"}
+                  stroke="currentColor"
+                  strokeWidth={2}
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+                </svg>
+              </button>
+
+              <button
+                onClick={() => setIsReportOpen(true)}
+                title="รายงานข้อมูล"
+                className="p-2 -mr-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-full active:scale-90 transition-all"
+              >
+                <Siren className="w-5 h-5" />
+              </button>
+            </div>
           </div>
 
           {/* Tags */}
@@ -175,11 +240,6 @@ export default function HerbDetailPage() {
             ))}
           </div>
 
-          {/* ⚠️ TODO: Edit/Delete — รอระบบ Role/Auth ก่อนเปิดใช้ */}
-          {/* <div className="px-6 mt-8 flex gap-3">
-            <button onClick={() => router.push(`/herbs/${params.id}/edit`)}>แก้ไข</button>
-          </div> */}
-
         </div>
       </div>
 
@@ -187,7 +247,7 @@ export default function HerbDetailPage() {
       <HerbReportModal
         isOpen={isReportOpen}
         onClose={() => setIsReportOpen(false)}
-        herbId={herb.id}          // <-- ส่ง id จริงจาก DB
+        herbId={herb.id} 
         herbName={herb.name}
       />
     </main>

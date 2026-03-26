@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Nav from "@/app/components/Nav";
 import Footer from "@/app/components/Footer";
 import CreatePostModal from "../../components/forcommunity/CreatePostModal";
+import PostReportModal from "@/app/components/PostreportModal"; // 🌟 เพิ่ม Modal รายงาน
 import {
   Search,
   Filter,
@@ -12,6 +13,11 @@ import {
   MessageCircle,
   Upload,
   Plus,
+  MoreHorizontal, // 🌟 เพิ่ม Icons
+  Bookmark,
+  Pencil,
+  Trash2,
+  Siren
 } from "lucide-react";
 
 type FeedPost = {
@@ -19,6 +25,8 @@ type FeedPost = {
   title: string;
   content: string;
   username: string;
+  user_id?: string; // 🌟 เผื่อ backend ส่ง user_id มาให้เช็คความเป็นเจ้าของ
+  is_bookmarked?: boolean;
   profileImg?: string;
   createdAt: string;
   created_at?: string;
@@ -33,21 +41,62 @@ type FeedPost = {
 export default function FeedPage() {
   const [posts, setPosts] = useState<FeedPost[]>([]);
   const [showCreate, setShowCreate] = useState(false);
-  
-  // 🌟 1. เพิ่ม State สำหรับเก็บคำค้นหา
   const [searchQuery, setSearchQuery] = useState("");
-  // 🌟 เพิ่ม State เลือกว่าจะดูแบบไหน (ค่าเริ่มต้นคือล่าสุด)
   const [feedSort, setFeedSort] = useState<"newest" | "trending">("newest");
   
+  // 🌟 States สำหรับจัดการ Dropdown และ Modals ใน Feed
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [editingPost, setEditingPost] = useState<FeedPost | null>(null);
+  const [reportingPost, setReportingPost] = useState<{ id: string; title: string } | null>(null);
+
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => {
+      setToastMessage(null);
+    }, 3000); // ให้หายไปเองใน 3 วินาที
+  };
+
   const router = useRouter();
 
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    fetch("http://localhost:8080/api/posts/feed", {
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-    })
-      .then((res) => res.json())
-      .then(setPosts);
+useEffect(() => {
+    const fetchFeedAndUser = async () => {
+      const token = localStorage.getItem("token");
+      
+      // 🌟 1. ถอดรหัส Token และระบุ Type ป้องกันตัวแดง
+      let parsedUserId: string | null = null;
+      if (token) {
+        try {
+          // บอก TypeScript ว่า payload มีหน้าตาแบบนี้นะ
+          const payload = JSON.parse(atob(token.split('.')[1])) as { 
+            user_id?: string; 
+            id?: string; 
+            sub?: string 
+          };
+          // ดึงค่ามา ถ้าไม่มีเลยให้เป็น null
+          parsedUserId = payload.user_id || payload.id || payload.sub || null;
+        } catch (e) {
+          parsedUserId = localStorage.getItem("user_id");
+        }
+      }
+
+      // 🌟 2. โหลดข้อมูลโพสต์
+      try {
+        const res = await fetch("http://localhost:8080/api/posts/feed", {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+        const data = await res.json();
+        
+        // 🌟 3. อัปเดต State พร้อมกัน เพื่อลดการ Render ซ้ำซ้อน (แก้ Error)
+        setCurrentUserId(parsedUserId);
+        setPosts(data);
+      } catch (err) {
+        console.error("Failed to fetch feed:", err);
+      }
+    };
+
+    fetchFeedAndUser();
   }, []);
 
   async function toggleLike(postID: string, liked?: boolean) {
@@ -71,30 +120,80 @@ export default function FeedPage() {
 
   async function sharePost(postID: string) {
     const token = localStorage.getItem("token");
-    if (!token) { alert("กรุณาเข้าสู่ระบบ"); return; }
+    if (!token) { showToast("กรุณาเข้าสู่ระบบ"); return; } // เปลี่ยนจาก alert เป็น showToast
 
-    const response = await fetch(
-      `http://localhost:8080/api/posts/share?post_id=${postID}`,
-      { method: "POST", headers: { Authorization: `Bearer ${token}` } }
-    );
-    const data = await response.json();
-    await navigator.clipboard.writeText(`${window.location.origin}/post/${postID}`);
-
-    if (data.success) {
-      alert("คัดลอกลิงก์โพสต์แล้ว!");
-      setPosts((prev) =>
-        prev.map((p) => (p.id === postID ? { ...p, shares: p.shares + 1 } : p))
+    try {
+      const response = await fetch(
+        `http://localhost:8080/api/posts/share?post_id=${postID}`,
+        { method: "POST", headers: { Authorization: `Bearer ${token}` } }
       );
-    } else {
-      alert("คัดลอกลิงก์โพสต์แล้ว (คุณ share ไปแล้ว)");
+      const data = await response.json();
+      
+      // คัดลอกลิงก์
+      await navigator.clipboard.writeText(`${window.location.origin}/post/${postID}`);
+
+      if (data.success) {
+        setPosts((prev) =>
+          prev.map((p) => (p.id === postID ? { ...p, shares: p.shares + 1 } : p))
+        );
+        showToast("คัดลอกลิงก์โพสต์แล้ว!"); // เปลี่ยนจาก alert เป็น showToast
+      } else {
+        showToast("คัดลอกลิงก์โพสต์แล้ว (คุณเคยแชร์ไปแล้ว)"); // เปลี่ยนจาก alert เป็น showToast
+      }
+    } catch (e) {
+      console.error(e);
+      showToast("เกิดข้อผิดพลาดในการแชร์");
     }
   }
 
-  // 🌟 2. สร้างฟังก์ชันกรองข้อมูล (Filter) ตาม Title, Content และ Username
-// 🌟 ประมวลผลโพสต์: ค้นหา -> กรองวันที่ (ถ้าเลือกฮิต) -> เรียงลำดับ
+// 🌟 ฟังก์ชัน Bookmark จากหน้า Feed
+  async function handleBookmark(postID: string) {
+    const token = localStorage.getItem("token");
+    if (!token) { showToast("กรุณาเข้าสู่ระบบ"); return; } // เปลี่ยน alert เป็น showToast
+    try {
+      const res = await fetch(`http://localhost:8080/api/posts/bookmark?post_id=${postID}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        
+        setPosts((prevPosts) => 
+          prevPosts.map((p) => 
+            p.id === postID 
+              ? { ...p, is_bookmarked: data.bookmarked } 
+              : p
+          )
+        );
+
+        // 🌟 เรียกใช้ Toast แทน alert()
+        showToast(data.message === "Bookmark added" ? "บันทึกโพสต์เรียบร้อย" : "ยกเลิกการบันทึกโพสต์แล้ว");
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  // 🌟 ฟังก์ชันลบโพสต์จากหน้า Feed
+  async function deletePost(postID: string) {
+    if (!confirm("คุณต้องการลบโพสต์นี้ใช่หรือไม่?")) return;
+    const token = localStorage.getItem("token");
+    if (!token) return;
+    try {
+      const res = await fetch(`http://localhost:8080/api/posts/delete?post_id=${postID}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        setPosts((prev) => prev.filter(p => p.id !== postID));
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
   const processedPosts = posts
     .filter((p) => {
-      // 1. กรองคำค้นหา (Search)
       const query = searchQuery.toLowerCase();
       return (
         p.title?.toLowerCase().includes(query) ||
@@ -103,27 +202,24 @@ export default function FeedPage() {
       );
     })
     .filter((p) => {
-      // 2. กรองเวลา (ถ้าเลือกโหมด "ยอดฮิต" ให้อยู่ใน 7 วัน)
       if (feedSort === "trending") {
         const postDate = new Date(p.created_at ?? p.createdAt);
         const sevenDaysAgo = new Date();
         sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
         return postDate >= sevenDaysAgo;
       }
-      return true; // โหมด "ล่าสุด" ให้แสดงทั้งหมด
+      return true; 
     })
     .sort((a, b) => {
-      // 3. เรียงลำดับ (Sort)
       if (feedSort === "trending") {
-        return b.likes - a.likes; // ยอดไลก์ มาก -> น้อย
+        return b.likes - a.likes; 
       } else {
         const dateA = new Date(a.created_at ?? a.createdAt).getTime();
         const dateB = new Date(b.created_at ?? b.createdAt).getTime();
-        return dateB - dateA; // วันที่ ใหม่ -> เก่า
+        return dateB - dateA; 
       }
     });
 
-  // แสดงภาพในการ์ด — สไตล์ Facebook album
   function PostImages({ post }: { post: FeedPost }) {
     const sorted = post.images?.length
       ? [...post.images].sort((a, b) => a.order - b.order)
@@ -135,24 +231,15 @@ export default function FeedPage() {
     const base = "http://localhost:8080";
 
     if (sorted.length === 1) {
-      return (
-        <img
-          src={`${base}${sorted[0].url}`}
-          className="w-full max-h-72 object-cover"
-        />
-      );
+      return <img src={`${base}${sorted[0].url}`} className="w-full max-h-72 object-cover" />;
     }
-
     if (sorted.length === 2) {
       return (
         <div className="grid grid-cols-2 gap-0.5">
-          {sorted.map((img, i) => (
-            <img key={i} src={`${base}${img.url}`} className="w-full h-44 object-cover" />
-          ))}
+          {sorted.map((img, i) => <img key={i} src={`${base}${img.url}`} className="w-full h-44 object-cover" />)}
         </div>
       );
     }
-
     if (sorted.length === 3) {
       return (
         <div className="grid grid-cols-2 gap-0.5">
@@ -181,82 +268,168 @@ export default function FeedPage() {
     );
   }
 
-  const renderPostCard = (post: FeedPost) => (
-    <div
-      key={post.id}
-      onClick={() => router.push(`/post/${post.id}`)}
-      className="mb-4 border border-gray-200 rounded-2xl overflow-hidden shadow-sm bg-white flex flex-col transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 group cursor-pointer"
-    >
-      {/* Header */}
-      <div className="bg-[#D9F2C7] px-4 py-3 flex items-center gap-3 transition-colors duration-300 group-hover:bg-[#cbeba3]">
-        {post.profileImg ? (
-          <img
-            src={`http://localhost:8080${post.profileImg}`}
-            className="w-10 h-10 rounded-full object-cover shadow-sm flex-shrink-0"
-            alt={post.username}
-          />
-        ) : (
-          <div className="w-10 h-10 rounded-full bg-green-400 flex items-center justify-center text-white font-bold text-sm flex-shrink-0 shadow-sm">
-            {post.username?.[0]?.toUpperCase() ?? "?"}
+  const renderPostCard = (post: FeedPost) => {
+    const isOwner = currentUserId === post.user_id;
+
+    return (
+      <div
+        key={post.id}
+        onClick={() => router.push(`/post/${post.id}`)}
+        className="mb-4 border border-gray-200 rounded-2xl overflow-hidden shadow-sm bg-white flex flex-col transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 group cursor-pointer relative"
+      >
+        
+        {/* Header */}
+        <div className="bg-[#e4ffea] px-4 py-3 flex items-center justify-between transition-colors duration-300 group-hover:bg-[#d8f5d0]">
+          <div className="flex items-center gap-3">
+            {post.profileImg ? (
+              <img
+                src={`http://localhost:8080${post.profileImg}`}
+                className="w-10 h-10 rounded-full object-cover shadow-sm flex-shrink-0"
+                alt={post.username}
+              />
+            ) : (
+              <div className="w-10 h-10 rounded-full bg-green-400 flex items-center justify-center text-white font-bold text-sm flex-shrink-0 shadow-sm">
+                {post.username?.[0]?.toUpperCase() ?? "?"}
+              </div>
+            )}
+            <div className="flex flex-col">
+              <span className="font-bold text-black text-[15px]">{post.username}</span>
+              <span className="text-green-600 font-medium text-xs">
+                {new Date(post.created_at ?? post.createdAt).toLocaleString("th-TH")}
+              </span>
+            </div>
           </div>
-        )}
-        <div className="flex flex-col">
-          <span className="font-bold text-black text-[15px]">{post.username}</span>
-          <span className="text-green-600 font-medium text-xs">
-            {new Date(post.created_at ?? post.createdAt).toLocaleString("th-TH")}
-          </span>
+
+          {/* 🌟 3-Dot Menu */}
+          <div className="relative">
+            <button
+              onClick={(e) => {
+                e.stopPropagation(); // ป้องกันการเด้งไปหน้า Post Detail
+                setOpenMenuId(openMenuId === post.id ? null : post.id);
+              }}
+              className="p-2 -mr-2 text-gray-500 hover:text-black hover:bg-white/50 rounded-full transition-all"
+            >
+              <MoreHorizontal className="w-5 h-5" />
+            </button>
+
+            {openMenuId === post.id && (
+              <>
+                <div 
+                  className="fixed inset-0 z-40" 
+                  onClick={(e) => { e.stopPropagation(); setOpenMenuId(null); }} 
+                />
+                <div 
+                  className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-50 overflow-hidden"
+                  onClick={(e) => e.stopPropagation()} // ป้องกันการกดเมนูแล้วเด้งไปหน้าอื่น
+                >
+                  {/* ปุ่ม Bookmark */}
+                  <button
+                    onClick={() => {
+                      handleBookmark(post.id);
+                      setOpenMenuId(null);
+                    }}
+                    className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 text-gray-700 text-[14px] font-medium transition-colors"
+                  >
+                    <Bookmark className={`w-4 h-4 ${post.is_bookmarked ? "fill-green-500 text-green-500" : "text-gray-500"}`} />
+                    {post.is_bookmarked ? "เลิกบันทึกโพสต์" : "บันทึกโพสต์"}
+                  </button>
+
+                  {/* เมนูเฉพาะเจ้าของโพสต์ */}
+                  {isOwner && (
+                    <>
+                      <button
+                        onClick={() => {
+                          setEditingPost(post);
+                          setOpenMenuId(null);
+                        }}
+                        className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 text-gray-700 text-[14px] font-medium transition-colors"
+                      >
+                        <Pencil className="w-4 h-4 text-blue-500" />
+                        แก้ไขโพสต์
+                      </button>
+                      <button
+                        onClick={() => {
+                          deletePost(post.id);
+                          setOpenMenuId(null);
+                        }}
+                        className="w-full flex items-center gap-3 px-4 py-3 hover:bg-red-50 text-red-600 text-[14px] font-medium transition-colors"
+                      >
+                        <Trash2 className="w-4 h-4 text-red-500" />
+                        ลบโพสต์
+                      </button>
+                    </>
+                  )}
+
+                  {/* เส้นคั่น */}
+                  {isOwner && <div className="h-px bg-gray-100 my-1" />}
+
+                  {/* ปุ่ม Report */}
+                  <button
+                    onClick={() => {
+                      setReportingPost({ id: post.id, title: post.title });
+                      setOpenMenuId(null);
+                    }}
+                    className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 text-gray-700 text-[14px] font-medium transition-colors"
+                  >
+                    <Siren className="w-4 h-4 text-orange-500" />
+                    รายงานปัญหา
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* Text content */}
+        <div className="px-4 pt-3 pb-2">
+          <h3 className="font-bold text-green-600 mb-1 leading-tight text-[15px] group-hover:text-green-700 transition-colors">
+            {post.title}
+          </h3>
+          <p className="text-[13px] text-gray-700 leading-snug line-clamp-2">
+            {post.content}
+          </p>
+        </div>
+
+        {/* Images */}
+        <div className="overflow-hidden">
+          <PostImages post={post} />
+        </div>
+
+        {/* Footer */}
+        <div className="border-t border-gray-100 bg-white px-5 py-2.5 flex items-center justify-between">
+          <div className="flex items-center gap-6">
+            <button
+              onClick={(e) => { e.stopPropagation(); toggleLike(post.id, post.liked); }}
+              className="flex items-center gap-1.5 p-1.5 -ml-1.5 rounded-lg hover:bg-red-50 active:scale-95 transition-all group/like"
+            >
+              <Heart className={`w-[18px] h-[18px] transition-transform duration-200 group-hover/like:scale-110 ${
+                post.liked ? "text-red-500 fill-red-500" : "text-gray-400 fill-gray-400 group-hover/like:text-red-400"
+              }`} />
+              <span className={`font-bold text-sm transition-colors ${
+                post.liked ? "text-red-500" : "text-gray-500 group-hover/like:text-red-400"
+              }`}>{post.likes}</span>
+            </button>
+
+            <button
+              onClick={(e) => e.stopPropagation()} 
+              className="flex items-center gap-1.5 p-1.5 rounded-lg hover:bg-green-50 active:scale-95 transition-all group/comment"
+            >
+              <MessageCircle className="w-[18px] h-[18px] text-gray-400 fill-gray-400 transition-transform duration-200 group-hover/comment:scale-110 group-hover/comment:text-green-500" />
+              <span className="text-gray-500 group-hover/comment:text-green-600 font-bold text-sm transition-colors">{post.comments}</span>
+            </button>
+          </div>
+
+          <button
+            onClick={(e) => { e.stopPropagation(); sharePost(post.id); }}
+            className="flex items-center gap-1.5 p-1.5 -mr-1.5 rounded-lg hover:bg-blue-50 active:scale-95 transition-all group/share"
+          >
+            <Upload className="w-[18px] h-[18px] text-gray-400 transition-transform duration-200 group-hover/share:-translate-y-0.5 group-hover/share:text-blue-500" />
+            <span className="text-gray-500 group-hover/share:text-blue-600 font-bold text-sm transition-colors">{post.shares}</span>
+          </button>
         </div>
       </div>
-
-      {/* Text content */}
-      <div className="px-4 pt-3 pb-2">
-        <h3 className="font-bold text-green-600 mb-1 leading-tight text-[15px] group-hover:text-green-700 transition-colors">
-          {post.title}
-        </h3>
-        <p className="text-[13px] text-gray-700 leading-snug line-clamp-2">
-          {post.content}
-        </p>
-      </div>
-
-      {/* Images */}
-      <div className="overflow-hidden">
-        <PostImages post={post} />
-      </div>
-
-      {/* Footer */}
-      <div className="border-t border-gray-100 bg-white px-5 py-2.5 flex items-center justify-between">
-        <div className="flex items-center gap-6">
-          <button
-            onClick={(e) => { e.stopPropagation(); toggleLike(post.id, post.liked); }}
-            className="flex items-center gap-1.5 p-1.5 -ml-1.5 rounded-lg hover:bg-red-50 active:scale-95 transition-all group/like"
-          >
-            <Heart className={`w-[18px] h-[18px] transition-transform duration-200 group-hover/like:scale-110 ${
-              post.liked ? "text-red-500 fill-red-500" : "text-gray-400 fill-gray-400 group-hover/like:text-red-400"
-            }`} />
-            <span className={`font-bold text-sm transition-colors ${
-              post.liked ? "text-red-500" : "text-gray-500 group-hover/like:text-red-400"
-            }`}>{post.likes}</span>
-          </button>
-
-          <button
-            onClick={(e) => e.stopPropagation()} 
-            className="flex items-center gap-1.5 p-1.5 rounded-lg hover:bg-green-50 active:scale-95 transition-all group/comment"
-          >
-            <MessageCircle className="w-[18px] h-[18px] text-gray-400 fill-gray-400 transition-transform duration-200 group-hover/comment:scale-110 group-hover/comment:text-green-500" />
-            <span className="text-gray-500 group-hover/comment:text-green-600 font-bold text-sm transition-colors">{post.comments}</span>
-          </button>
-        </div>
-
-        <button
-          onClick={(e) => { e.stopPropagation(); sharePost(post.id); }}
-          className="flex items-center gap-1.5 p-1.5 -mr-1.5 rounded-lg hover:bg-blue-50 active:scale-95 transition-all group/share"
-        >
-          <Upload className="w-[18px] h-[18px] text-gray-400 transition-transform duration-200 group-hover/share:-translate-y-0.5 group-hover/share:text-blue-500" />
-          <span className="text-gray-500 group-hover/share:text-blue-600 font-bold text-sm transition-colors">{post.shares}</span>
-        </button>
-      </div>
-    </div>
-  );
+    );
+  };
 
   return (
     <div className="min-h-screen bg-white flex flex-col w-full relative">
@@ -265,7 +438,7 @@ export default function FeedPage() {
       </div>
 
       <main className="w-full max-w-2xl mx-auto flex-1 flex flex-col px-4 md:px-6 pt-5 pb-6">
-{/* Search & Sort */}
+        {/* Search & Sort */}
         <div className="bg-white rounded-2xl shadow-sm px-4 py-3 mb-4 flex gap-2 items-center border border-gray-100">
           <div className="relative flex-1 group">
             <input
@@ -278,7 +451,6 @@ export default function FeedPage() {
             <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 group-focus-within:text-green-500 transition-colors" />
           </div>
           
-          {/* 🌟 ปุ่มสลับโหมด กดแล้วเปลี่ยนเป็นยอดฮิต/ล่าสุด */}
           <button 
             onClick={() => setFeedSort(prev => prev === "newest" ? "trending" : "newest")}
             className={`border rounded-full px-3 py-1.5 flex items-center gap-1.5 text-xs font-medium whitespace-nowrap transition-all active:scale-95 ${
@@ -292,7 +464,6 @@ export default function FeedPage() {
           </button>
         </div>
 
-        {/* 🌟 แสดงผลโดยใช้ processedPosts */}
         <div>
           {processedPosts.length > 0 ? (
             processedPosts.map(renderPostCard)
@@ -313,11 +484,46 @@ export default function FeedPage() {
         <Plus className="w-8 h-8 transition-transform duration-300 group-hover:rotate-90" />
       </button>
 
+        {/* 🌟 Toast Notification UI */}
+      {toastMessage && (
+        <div className="fixed bottom-24 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-[14px] font-medium px-6 py-3 rounded-full shadow-2xl z-[100] flex items-center gap-2 transition-all duration-300">
+          <Bookmark className="w-4 h-4 text-green-400" />
+          {toastMessage}
+        </div>
+      )}
+
       <Footer />
 
+      {/* Modals */}
       {showCreate && (
         <CreatePostModal modalType="create" onClose={() => setShowCreate(false)} />
       )}
+      
+      {/* แก้ไขโพสต์ */}
+      {editingPost && (
+        <CreatePostModal 
+          modalType="edit"
+          postId={editingPost.id}
+          initialTitle={editingPost.title}
+          initialContent={editingPost.content}
+          initialImages={editingPost.images}
+          onClose={() => setEditingPost(null)}
+          onSuccess={() => {
+            window.location.reload(); 
+          }}
+        />
+      )}
+
+      {/* รายงานโพสต์ */}
+      {reportingPost && (
+        <PostReportModal
+          isOpen={!!reportingPost}
+          postId={reportingPost.id}
+          postTitle={reportingPost.title}
+          onClose={() => setReportingPost(null)}
+        />
+      )}
+
     </div>
   );
 }

@@ -1,17 +1,21 @@
 package handlers
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
+	"time"
 
+	"herb-api/internal/database"
 	"herb-api/internal/middleware"
 	"herb-api/internal/models"
 	"herb-api/internal/repository"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -215,6 +219,24 @@ func (h *PostHandler) GetComments(c *fiber.Ctx) error {
 	return c.JSON(comments)
 }
 
+// ---------- DELETE COMMENT ----------
+func (h *PostHandler) DeleteComment(c *fiber.Ctx) error {
+	userID := getUserIDFromContext(c)
+	commentIDStr := c.Query("comment_id")
+
+	commentID, err := primitive.ObjectIDFromHex(commentIDStr)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid comment_id"})
+	}
+
+	// เรียกไปยัง Repository เพื่อลบคอมเมนต์ โดยตรวจสอบ userID ด้วย
+	if err := h.Posts.DeleteComment(commentID, userID); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "delete comment failed"})
+	}
+
+	return c.SendStatus(fiber.StatusOK)
+}
+
 // ---------- SHARE ----------
 func (h *PostHandler) SharePost(c *fiber.Ctx) error {
 	userID := getUserIDFromContext(c)
@@ -304,4 +326,226 @@ func (h *PostHandler) PostDetail(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(resp)
+}
+
+func (h *PostHandler) EditPost(c *fiber.Ctx) error {
+	userID := getUserIDFromContext(c)
+
+	// 1. รับค่า Text จาก Form
+	postIDStr := c.FormValue("post_id")
+	title := c.FormValue("title")
+	content := c.FormValue("content")
+
+	if postIDStr == "" || title == "" || content == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "missing required fields"})
+	}
+
+	postID, err := primitive.ObjectIDFromHex(postIDStr)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid post_id"})
+	}
+
+	// 2. จัดการรูปภาพ (รูปเก่าที่เก็บไว้ + รูปใหม่ที่อัปโหลด)
+	var finalImages []models.PostImage
+	position := 0
+
+	form, err := c.MultipartForm()
+	if err == nil {
+		// --- ดึงรูปภาพเก่าที่ไม่ได้ถูกลบ ---
+		if keptImages, ok := form.Value["kept_images"]; ok {
+			for _, url := range keptImages {
+				finalImages = append(finalImages, models.PostImage{
+					ID:       primitive.NewObjectID(),
+					URL:      url, // path เดิมของรูป
+					Position: position,
+				})
+				position++
+			}
+		}
+
+		// --- เซฟรูปภาพใหม่ที่เพิ่งอัปโหลด ---
+		if newFiles, ok := form.File["new_images"]; ok {
+			uploadDir := "./uploads/posts/"
+			os.MkdirAll(uploadDir, os.ModePerm)
+
+			for _, fileHeader := range newFiles {
+				file, err := fileHeader.Open()
+				if err != nil {
+					continue
+				}
+				defer file.Close()
+
+				ext := filepath.Ext(fileHeader.Filename)
+				filename := uuid.NewString() + ext
+				filePath := uploadDir + filename
+
+				dst, err := os.Create(filePath)
+				if err != nil {
+					continue
+				}
+				defer dst.Close()
+
+				io.Copy(dst, file)
+
+				imageURL := "/uploads/posts/" + filename
+				finalImages = append(finalImages, models.PostImage{
+					ID:       primitive.NewObjectID(),
+					URL:      imageURL,
+					Position: position,
+				})
+				position++
+			}
+		}
+	}
+
+	// 3. เรียก Repository เพื่ออัปเดตข้อมูลทั้งหมดรวมถึงรูปภาพ
+	if err := h.Posts.UpdatePost(postID, userID, title, content, finalImages); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "update failed"})
+	}
+
+	return c.SendStatus(fiber.StatusOK)
+}
+
+const postBookmarkCollection = "post_bookmarks"
+
+// ---------- BOOKMARK ----------
+
+func (h *PostHandler) ToggleBookmarkPost(c *fiber.Ctx) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	userID := getUserIDFromContext(c)
+	if userID == primitive.NilObjectID {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Unauthorized"})
+	}
+
+	// ใช้ c.Query("post_id") เพื่อให้สอดคล้องกับฟังก์ชัน LikePost ของคุณ
+	postIDStr := c.Query("post_id")
+	postID, err := primitive.ObjectIDFromHex(postIDStr)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid post_id"})
+	}
+
+	collection := database.GetCollection(postBookmarkCollection)
+	filter := bson.M{"post_id": postID, "user_id": userID}
+	var existing models.PostBookmark
+
+	err = collection.FindOne(ctx, filter).Decode(&existing)
+
+	if err == nil {
+		// มี Bookmark อยู่แล้ว สลับสถานะ (Toggle)
+		newStatus := !existing.Status
+		update := bson.M{"$set": bson.M{"status": newStatus}}
+		_, err := collection.UpdateOne(ctx, filter, update)
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to update bookmark"})
+		}
+
+		statusMsg := "Bookmark removed"
+		if newStatus {
+			statusMsg = "Bookmark added"
+		}
+		return c.JSON(fiber.Map{"message": statusMsg, "bookmarked": newStatus})
+	}
+
+	// ยังไม่เคย Bookmark สร้างใหม่
+	newBookmark := models.PostBookmark{
+		ID:        primitive.NewObjectID(),
+		PostID:    postID,
+		UserID:    userID,
+		Status:    true,
+		CreatedAt: time.Now(),
+	}
+
+	_, err = collection.InsertOne(ctx, newBookmark)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to add bookmark"})
+	}
+
+	return c.JSON(fiber.Map{"message": "Bookmark added", "bookmarked": true})
+}
+
+func (h *PostHandler) GetPostBookmarkStatus(c *fiber.Ctx) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	userID := getUserIDFromContext(c)
+	if userID == primitive.NilObjectID {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Unauthorized"})
+	}
+
+	postIDStr := c.Query("post_id")
+	postID, err := primitive.ObjectIDFromHex(postIDStr)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid post_id"})
+	}
+
+	collection := database.GetCollection(postBookmarkCollection)
+	filter := bson.M{"post_id": postID, "user_id": userID}
+
+	var existing models.PostBookmark
+	err = collection.FindOne(ctx, filter).Decode(&existing)
+
+	if err != nil {
+		return c.JSON(fiber.Map{"bookmarked": false})
+	}
+
+	return c.JSON(fiber.Map{"bookmarked": existing.Status})
+}
+
+// ---------- ดึงโพสต์ที่บุ๊กมาร์กทั้งหมด ----------
+func (h *PostHandler) GetAllBookmarkedPosts(c *fiber.Ctx) error {
+	userID := getUserIDFromContext(c)
+	if userID == primitive.NilObjectID {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Unauthorized"})
+	}
+
+	feed, err := h.Posts.GetBookmarkedPosts(userID)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to load bookmarks"})
+	}
+
+	// Fetch Images ของแต่ละโพสต์
+	for i := range feed {
+		if id, ok := feed[i]["id"].(primitive.ObjectID); ok {
+			feed[i]["id"] = id.Hex()
+
+			imagesData, _ := h.Posts.GetImages(id)
+			var images []map[string]interface{}
+			for _, img := range imagesData {
+				images = append(images, map[string]interface{}{
+					"url":   img.URL,
+					"order": img.Position,
+				})
+			}
+			feed[i]["images"] = images
+		}
+	}
+
+	return c.JSON(feed)
+}
+
+// ---------- ดึงประวัติคอมเมนต์ของตัวเอง ----------
+func (h *PostHandler) GetMyComments(c *fiber.Ctx) error {
+	userID := getUserIDFromContext(c)
+	if userID == primitive.NilObjectID {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Unauthorized"})
+	}
+
+	comments, err := h.Posts.GetUserComments(userID)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to get comments"})
+	}
+
+	// Convert ObjectIDs to Hex
+	for i := range comments {
+		if id, ok := comments[i]["id"].(primitive.ObjectID); ok {
+			comments[i]["id"] = id.Hex()
+		}
+		if postID, ok := comments[i]["post_id"].(primitive.ObjectID); ok {
+			comments[i]["post_id"] = postID.Hex()
+		}
+	}
+
+	return c.JSON(comments)
 }

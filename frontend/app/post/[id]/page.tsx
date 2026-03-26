@@ -4,9 +4,9 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Nav from "@/app/components/Nav";
 import Footer from "@/app/components/Footer";
-import ReportPostModal from "@/app/components/forcommunity/ReportPostModal";
-import CommentReportModal from "@/app/components/CommentReportModal"; // เพิ่มตัวนี้
-import { ArrowLeft, Heart, Upload, Siren, X } from "lucide-react";
+import CreatePostModal from "@/app/components/forcommunity/CreatePostModal";
+import CommentReportModal from "@/app/components/CommentReportModal";
+import { ArrowLeft, Heart, Upload, Siren, X, Trash2, Pencil, MoreHorizontal, Bookmark, Info } from "lucide-react";
 import PostReportModal from "@/app/components/PostreportModal";
 
 type ImageItem = { url: string; order: number };
@@ -14,6 +14,7 @@ type ImageItem = { url: string; order: number };
 type PostDetail = {
   post: {
     id: string;
+    user_id: string;
     title: string;
     content: string;
     createdAt: string;
@@ -169,6 +170,7 @@ function PostImageGrid({
   // 4+ ภาพ
   const shown = sorted.slice(0, 4);
   const extra = sorted.length - 4;
+  
   return (
     <div className="grid grid-cols-2 gap-0.5">
       {shown.map((img, i) => (
@@ -200,13 +202,52 @@ export default function PostDetailPage() {
   const [commentText, setCommentText] = useState("");
   const [sending, setSending] = useState(false);
   
-  // State สำหรับ Modals
+  // State สำหรับ Modals และ Bookmark
   const [showReport, setShowReport] = useState(false);
   const [selectedComment, setSelectedComment] = useState<{id: string, content: string} | null>(null);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const [isSaved, setIsSaved] = useState(false);
 
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
+
+  const [showMenu, setShowMenu] = useState(false);
+
+  // 🌟 State สำหรับ Toast
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => {
+      setToastMessage(null);
+    }, 3000);
+  };
+  
   useEffect(() => {
     const token = localStorage.getItem("token");
+    
+    if (token) {
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        setCurrentUserId(payload.user_id || payload.id || payload.sub); 
+      } catch (e) {
+        setCurrentUserId(localStorage.getItem("user_id"));
+      }
+
+      // ดึงสถานะ Bookmark ตอนโหลดหน้า
+      fetch(`http://localhost:8080/api/posts/bookmark/status?post_id=${id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+        .then((res) => {
+          if (!res.ok) throw new Error("Not bookmarked or error");
+          return res.json();
+        })
+        .then((statusData) => {
+          setIsSaved(!!statusData.bookmarked);
+        })
+        .catch(() => setIsSaved(false));
+    }
+
+    // ดึงข้อมูลโพสต์
     fetch(`http://localhost:8080/api/posts/detail?post_id=${id}`, {
       headers: token ? { Authorization: `Bearer ${token}` } : {},
     })
@@ -215,10 +256,37 @@ export default function PostDetailPage() {
       .finally(() => setLoading(false));
   }, [id]);
 
+  // ฟังก์ชันจัดการกด Bookmark
+  async function handleBookmark() {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      showToast("กรุณาเข้าสู่ระบบเพื่อบันทึกโพสต์"); // เปลี่ยนเป็น Toast
+      return;
+    }
+    try {
+      const res = await fetch(`http://localhost:8080/api/posts/bookmark?post_id=${id}`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (res.ok) {
+        setIsSaved(!isSaved);
+        showToast(!isSaved ? "บันทึกโพสต์เรียบร้อย" : "ยกเลิกการบันทึกโพสต์แล้ว"); // แสดง Toast 
+      } else {
+        console.error("Failed to bookmark post");
+      }
+    } catch (error) {
+      console.error("Error bookmarking post:", error);
+    }
+  }
+
   async function toggleLike() {
     if (!data) return;
     const token = localStorage.getItem("token");
-    if (!token) { alert("กรุณาเข้าสู่ระบบ"); return; }
+    if (!token) { showToast("กรุณาเข้าสู่ระบบ"); return; } // เปลี่ยนเป็น Toast
     const liked = data.post.liked;
     await fetch(
       `http://localhost:8080/api/posts/${liked ? "unlike" : "like"}?post_id=${id}`,
@@ -232,30 +300,38 @@ export default function PostDetailPage() {
     );
   }
 
+  // 🌟 ฟังก์ชันแชร์ที่เปลี่ยนมาใช้ Toast
   async function sharePost() {
     if (!data) return;
     const token = localStorage.getItem("token");
-    if (!token) { alert("กรุณาเข้าสู่ระบบ"); return; }
-    const response = await fetch(
-      `http://localhost:8080/api/posts/share?post_id=${id}`,
-      { method: "POST", headers: { Authorization: `Bearer ${token}` } }
-    );
-    const result = await response.json();
-    await navigator.clipboard.writeText(`${window.location.origin}/post/${id}`);
-    if (result.success) {
-      alert("คัดลอกลิงก์โพสต์แล้ว!");
-      setData((prev) =>
-        prev ? { ...prev, post: { ...prev.post, shares: prev.post.shares + 1 } } : prev
+    if (!token) { showToast("กรุณาเข้าสู่ระบบ"); return; }
+    
+    try {
+      const response = await fetch(
+        `http://localhost:8080/api/posts/share?post_id=${id}`,
+        { method: "POST", headers: { Authorization: `Bearer ${token}` } }
       );
-    } else {
-      alert("คัดลอกลิงก์โพสต์แล้ว (คุณ share ไปแล้ว)");
+      const result = await response.json();
+      await navigator.clipboard.writeText(`${window.location.origin}/post/${id}`);
+      
+      if (result.success) {
+        showToast("คัดลอกลิงก์โพสต์แล้ว!"); // 🌟 แสดง Toast แจ้งเตือน
+        setData((prev) =>
+          prev ? { ...prev, post: { ...prev.post, shares: prev.post.shares + 1 } } : prev
+        );
+      } else {
+        showToast("คัดลอกลิงก์โพสต์แล้ว (คุณเคยแชร์ไปแล้ว)"); // 🌟 แสดง Toast
+      }
+    } catch (error) {
+      console.error(error);
+      showToast("เกิดข้อผิดพลาดในการแชร์");
     }
   }
 
   async function sendComment() {
     if (!commentText.trim()) return;
     const token = localStorage.getItem("token");
-    if (!token) { alert("กรุณาเข้าสู่ระบบ"); return; }
+    if (!token) { showToast("กรุณาเข้าสู่ระบบ"); return; }
     try {
       setSending(true);
       const res = await fetch("http://localhost:8080/api/posts/comment", {
@@ -263,7 +339,7 @@ export default function PostDetailPage() {
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ post_id: id, content: commentText }),
       });
-      if (!res.ok) { alert("ส่งคอมเมนต์ไม่สำเร็จ"); return; }
+      if (!res.ok) { showToast("ส่งคอมเมนต์ไม่สำเร็จ"); return; }
       const savedComment = await res.json();
       setData((prev) =>
         prev ? {
@@ -275,6 +351,52 @@ export default function PostDetailPage() {
       setCommentText("");
     } finally {
       setSending(false);
+    }
+  }
+
+  async function deletePost() {
+    if (!confirm("คุณต้องการลบโพสต์นี้ใช่หรือไม่?")) return;
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    try {
+      const res = await fetch(`http://localhost:8080/api/posts/delete?post_id=${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        alert("ลบโพสต์เรียบร้อยแล้ว"); // อันนี้ทิ้ง alert ไว้ได้เพราะเรากำลังจะเด้งเปลี่ยนหน้า
+        router.push("/");
+      } else {
+        showToast("ลบโพสต์ไม่สำเร็จ");
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  async function deleteComment(commentId: string) {
+    if (!confirm("คุณต้องการลบคอมเมนต์นี้ใช่หรือไม่?")) return;
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    try {
+      const res = await fetch(`http://localhost:8080/api/posts/comment?comment_id=${commentId}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        setData((prev) => prev ? {
+          ...prev,
+          comments: prev.comments.filter(c => c.id !== commentId),
+          post: { ...prev.post, comments: prev.post.comments - 1 }
+        } : prev);
+        showToast("ลบคอมเมนต์เรียบร้อย");
+      } else {
+        showToast("ลบคอมเมนต์ไม่สำเร็จ");
+      }
+    } catch (error) {
+      console.error(error);
     }
   }
 
@@ -293,7 +415,7 @@ export default function PostDetailPage() {
   const sortedImages = [...(data.images ?? [])].sort((a, b) => a.order - b.order);
 
 return (
-    <div className="min-h-screen bg-white flex flex-col">
+    <div className="min-h-screen bg-white flex flex-col relative">
       <div className="sticky top-0 w-full bg-white z-50 shadow-sm border-b-2 border-b-[#97DB8B]">
         <Nav />
       </div>
@@ -301,18 +423,88 @@ return (
       <div className="w-full max-w-2xl mx-auto px-4 md:px-6 pt-5 pb-10 flex flex-col gap-4">
         {/* Post Card */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+          
+          {/* Header - ยุบปุ่มเป็น Dropdown */}
           <div className="px-4 pt-4 pb-2 flex items-center justify-between">
             <button onClick={() => router.back()} className="p-2 -ml-2 text-gray-500 hover:text-black hover:bg-gray-100 rounded-full transition-all">
               <ArrowLeft className="w-5 h-5" />
             </button>
-            {/* ปุ่มรายงานโพสต์ */}
-            <button
-              onClick={() => setShowReport(true)}
-              className="p-2 -mr-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-full active:scale-90 transition-all"
-              title="รายงานโพสต์"
-            >
-              <Siren className="w-5 h-5" />
-            </button>
+            
+            <div className="relative">
+              <button
+                onClick={() => setShowMenu(!showMenu)}
+                className="p-2 -mr-2 text-gray-500 hover:text-black hover:bg-gray-100 rounded-full transition-all"
+                title="ตัวเลือกเพิ่มเติม"
+              >
+                <MoreHorizontal className="w-5 h-5" />
+              </button>
+
+              {/* เมนู Dropdown */}
+              {showMenu && (
+                <>
+                  {/* พื้นหลังใสๆ สำหรับคลิกเพื่อปิดเมนู */}
+                  <div 
+                    className="fixed inset-0 z-40" 
+                    onClick={() => setShowMenu(false)} 
+                  />
+                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-50 overflow-hidden">
+                    
+                    {/* 🌟 ปุ่ม Bookmark 🌟 */}
+                    <button
+                      onClick={() => {
+                        handleBookmark();
+                        setShowMenu(false);
+                      }}
+                      className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 text-gray-700 text-[14px] font-medium transition-colors"
+                    >
+                      <Bookmark className={`w-4 h-4 ${isSaved ? "fill-green-500 text-green-500" : "text-gray-500"}`} />
+                      {isSaved ? "เลิกบันทึกโพสต์" : "บันทึกโพสต์"}
+                    </button>
+
+                    {/* เมนูเฉพาะเจ้าของโพสต์ */}
+                    {currentUserId === data.post.user_id && (
+                      <>
+                        <button
+                          onClick={() => {
+                            setIsEditing(true);
+                            setShowMenu(false);
+                          }}
+                          className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 text-gray-700 text-[14px] font-medium transition-colors"
+                        >
+                          <Pencil className="w-4 h-4 text-blue-500" />
+                          แก้ไขโพสต์
+                        </button>
+                        <button
+                          onClick={() => {
+                            deletePost();
+                            setShowMenu(false);
+                          }}
+                          className="w-full flex items-center gap-3 px-4 py-3 hover:bg-red-50 text-red-600 text-[14px] font-medium transition-colors"
+                        >
+                          <Trash2 className="w-4 h-4 text-red-500" />
+                          ลบโพสต์
+                        </button>
+                      </>
+                    )}
+
+                    {/* เส้นคั่นก่อนปุ่ม Report (ถ้าเป็นเจ้าของโพสต์) */}
+                    {currentUserId === data.post.user_id && <div className="h-px bg-gray-100 my-1" />}
+
+                    {/* ปุ่มรายงานโพสต์ */}
+                    <button
+                      onClick={() => {
+                        setShowReport(true);
+                        setShowMenu(false);
+                      }}
+                      className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 text-gray-700 text-[14px] font-medium transition-colors"
+                    >
+                      <Siren className="w-4 h-4 text-orange-500" />
+                      รายงานปัญหา
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
 
           {/* Author */}
@@ -398,14 +590,14 @@ return (
             </button>
           </div>
 
-        {/* List คอมเมนต์ */}
+          {/* List คอมเมนต์ */}
           <div className="flex flex-col gap-3">
             {data.comments.map((c) => (
               <div 
                 key={c.id} 
                 className="bg-white border border-gray-100 shadow-sm rounded-xl py-3 pl-3 pr-3 flex gap-2 items-start group"
               >
-                {/* ส่วนรูปโปรไฟล์ - จะชิดขอบซ้ายมากขึ้นเพราะ pl-2 */}
+                {/* ส่วนรูปโปรไฟล์ */}
                 {c.profileImg ? (
                   <img
                     src={`http://localhost:8080${c.profileImg}`}
@@ -419,15 +611,27 @@ return (
                 <div className="flex flex-col flex-1 mt-0.5">
                   <div className="flex justify-between items-start">
                     <span className="font-bold text-green-700 text-[14px]">{c.username}</span>
-                    
-                  {/* ปุ่มรายงานคอมเมนต์ใหม่ (โชว์สีเทาตลอด เอาเมาส์ชี้เปลี่ยนเป็นสีแดง) */}
-                  <button 
-                    onClick={() => setSelectedComment({ id: c.id, content: c.content })}
-                    className="p-1 text-gray-300 hover:text-red-400 transition-all"
-                    title="รายงานคอมเมนต์"
-                  >
-                    <Siren className="w-4 h-4" />
-                  </button>
+                    <div className="flex items-center gap-1">
+                      {/* ปุ่มลบคอมเมนต์ */}
+                      {currentUserId === c.user_id && (
+                        <button 
+                          onClick={() => deleteComment(c.id)}
+                          className="p-1 text-gray-300 hover:text-red-600 transition-all"
+                          title="ลบคอมเมนต์"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
+                      
+                      {/* ปุ่มรายงานคอมเมนต์ */}
+                      <button 
+                        onClick={() => setSelectedComment({ id: c.id, content: c.content })}
+                        className="p-1 text-gray-300 hover:text-red-400 transition-all"
+                        title="รายงานคอมเมนต์"
+                      >
+                        <Siren className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
                   <p className="text-gray-700 text-[14px] leading-relaxed mt-1">{c.content}</p>
                   <p className="text-gray-400 text-[11px] mt-1.5 font-medium">
@@ -442,6 +646,14 @@ return (
 
       <Footer />
 
+      {/* 🌟 Toast Notification UI */}
+      {toastMessage && (
+        <div className="fixed bottom-24 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-[14px] font-medium px-6 py-3 rounded-full shadow-2xl z-[100] flex items-center gap-2 transition-all duration-300">
+          <Info className="w-4 h-4 text-green-400" />
+          {toastMessage}
+        </div>
+      )}
+
       {/* Lightbox */}
       {lightboxIndex !== null && (
         <Lightbox
@@ -455,7 +667,7 @@ return (
       {showReport && (
         <PostReportModal
           isOpen={showReport}
-          postId={id as string} // ส่ง postId ไปด้วย
+          postId={id as string}
           postTitle={data.post.title}
           onClose={() => setShowReport(false)}
         />
@@ -467,6 +679,20 @@ return (
           onClose={() => setSelectedComment(null)}
           commentId={selectedComment.id}
           commentContent={selectedComment.content}
+        />
+      )}
+
+      {isEditing && (
+        <CreatePostModal 
+          modalType="edit"
+          postId={id as string}
+          initialTitle={data.post.title}
+          initialContent={data.post.content}
+          initialImages={data.images}
+          onClose={() => setIsEditing(false)}
+          onSuccess={() => {
+            window.location.reload(); 
+          }}
         />
       )}
     </div>
