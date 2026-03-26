@@ -28,22 +28,21 @@ const (
 type Report struct {
 	ID primitive.ObjectID `json:"id,omitempty"   bson:"_id,omitempty"`
 
-	// ---- ข้อมูล target ที่ถูก report ----
-	TargetType TargetType `json:"target_type"    bson:"target_type"` // herb | article | community
-	TargetID   string     `json:"target_id"      bson:"target_id"`   // ObjectID ของ herb/article/post
-	TargetName string     `json:"target_name"    bson:"target_name"` // ชื่อ/หัวข้อ เพื่อให้ Admin อ่านง่าย
+	TargetType TargetType `json:"target_type"    bson:"target_type"`
+	TargetID   string     `json:"target_id"      bson:"target_id"`
+	TargetName string     `json:"target_name"    bson:"target_name"`
 
-	// ---- ข้อมูลผู้ report ----
-	ReporterID   string `json:"reporter_id"    bson:"reporter_id"` // user ID จาก JWT
+	// ✅ เพิ่ม field นี้ — ใช้เก็บ Post ID เมื่อ target_type = "comment"
+	CommunityPostID string `json:"community_post_id" bson:"community_post_id,omitempty"`
+
+	ReporterID   string `json:"reporter_id"    bson:"reporter_id"`
 	ReporterName string `json:"reporter_name"  bson:"reporter_name"`
 
-	// ---- เนื้อหา report ----
-	Reason string `json:"reason"         bson:"reason"` // เหตุผลที่เลือก
-	Detail string `json:"detail"         bson:"detail"` // รายละเอียดเพิ่มเติม (optional)
+	Reason string `json:"reason"         bson:"reason"`
+	Detail string `json:"detail"         bson:"detail"`
 
-	// ---- สถานะ ----
-	Status    ReportStatus `json:"status"         bson:"status"`     // pending | reviewed | resolved | dismissed
-	AdminNote string       `json:"admin_note"     bson:"admin_note"` // note จาก Admin
+	Status    ReportStatus `json:"status"         bson:"status"`
+	AdminNote string       `json:"admin_note"     bson:"admin_note"`
 
 	CreatedAt time.Time `json:"created_at"     bson:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"     bson:"updated_at"`

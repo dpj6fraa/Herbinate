@@ -11,6 +11,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 const reportCollection = "reports"
@@ -299,4 +300,56 @@ func GetReportByID(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(report)
+}
+
+func GetMyReports(c *fiber.Ctx) error {
+	userObjID := middleware.GetUserID(c)
+	if userObjID == primitive.NilObjectID {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Unauthorized"})
+	}
+
+	reporterID := userObjID.Hex()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	collection := database.GetCollection(reportCollection)
+	commentCollection := database.GetCollection("post_comments")
+
+	filter := bson.M{"reporter_id": reporterID}
+	opts := options.Find().SetSort(bson.M{"created_at": -1})
+	cursor, err := collection.Find(ctx, filter, opts)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to fetch reports"})
+	}
+	defer cursor.Close(ctx)
+
+	// ✅ ใช้ []models.Report แทน []bson.M
+	var reports []models.Report
+	if err = cursor.All(ctx, &reports); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to parse reports"})
+	}
+
+	// ✅ lookup post_id จาก post_comments เมื่อ target_type = "comment"
+	for i := range reports {
+		if reports[i].TargetType == "comment" && reports[i].TargetID != "" {
+			commentObjID, err := primitive.ObjectIDFromHex(reports[i].TargetID)
+			if err == nil {
+				var comment bson.M
+				err = commentCollection.FindOne(ctx, bson.M{"_id": commentObjID}).Decode(&comment)
+				if err == nil {
+					if postID, ok := comment["post_id"].(primitive.ObjectID); ok {
+						reports[i].CommunityPostID = postID.Hex() // ✅ set ตรงๆ ใน struct
+					}
+				}
+			}
+		}
+	}
+
+	// ✅ ถ้าไม่มีข้อมูลให้ return [] ไม่ใช่ null
+	if reports == nil {
+		reports = []models.Report{}
+	}
+
+	return c.JSON(reports)
 }

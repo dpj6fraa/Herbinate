@@ -59,6 +59,10 @@ func SetupRoutes(app *fiber.App) {
 	posts.Delete("/delete", middleware.AuthMiddleware(), postHandler.DeletePost)
 	posts.Delete("/comment", middleware.AuthMiddleware(), postHandler.DeleteComment)
 	posts.Put("/edit", middleware.AuthMiddleware(), postHandler.EditPost)
+	posts.Get("/my-comments", middleware.AuthMiddleware(), postHandler.GetMyComments)
+	// Routes สำหรับ Bookmark Posts
+	posts.Post("/bookmark", middleware.AuthMiddleware(), postHandler.ToggleBookmarkPost)
+	posts.Get("/bookmark/status", middleware.AuthMiddleware(), postHandler.GetPostBookmarkStatus)
 
 	// ==========================================
 	// Herbs Routes
@@ -79,6 +83,7 @@ func SetupRoutes(app *fiber.App) {
 	// 🌟 เพิ่ม Routes จัดการ Bookmark ของสมุนไพรแต่ละตัว (ต้อง Login)
 	herbs.Post("/:id/bookmark", middleware.AuthMiddleware(), handlers.ToggleBookmarkHerb)
 	herbs.Get("/:id/bookmark", middleware.AuthMiddleware(), handlers.GetHerbBookmarkStatus)
+	posts.Get("/bookmarks", middleware.AuthMiddleware(), postHandler.GetAllBookmarkedPosts)
 
 	// Articles
 	articles := api.Group("/articles")
@@ -94,6 +99,7 @@ func SetupRoutes(app *fiber.App) {
 
 	// User route — ต้อง login
 	api.Post("/reports", middleware.AuthMiddleware(), handlers.CreateReport)
+	api.Get("/reports/my-reports", middleware.AuthMiddleware(), handlers.GetMyReports)
 
 	// Admin routes — ต้อง login + เป็น admin
 	admin := api.Group("/admin", middleware.AuthMiddleware() /*, middleware.AdminRequired */)
