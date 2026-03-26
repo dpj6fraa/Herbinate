@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"herb-api/internal/database"
+	"herb-api/internal/middleware"
 	"herb-api/internal/models"
 
 	"github.com/gofiber/fiber/v2"
@@ -206,6 +207,140 @@ func SearchByTag(c *fiber.Ctx) error {
 
 	var herbs []models.Herb
 	cursor.All(ctx, &herbs)
+
+	return c.JSON(herbs)
+}
+
+const herbBookmarkCollection = "herb_bookmarks"
+
+// ToggleBookmarkHerb สลับสถานะการบุ๊กมาร์กสมุนไพร
+func ToggleBookmarkHerb(c *fiber.Ctx) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	userID := middleware.GetUserID(c)
+	if userID == primitive.NilObjectID {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Unauthorized"})
+	}
+
+	herbID, err := primitive.ObjectIDFromHex(c.Params("id"))
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid herb ID"})
+	}
+
+	collection := database.GetCollection(herbBookmarkCollection)
+
+	// Check if bookmark exists
+	filter := bson.M{"herb_id": herbID, "user_id": userID}
+	var existing models.HerbBookmark
+	err = collection.FindOne(ctx, filter).Decode(&existing)
+
+	if err == nil {
+		// Bookmark exists, so we toggle its status
+		newStatus := !existing.Status
+		update := bson.M{"$set": bson.M{"status": newStatus}}
+		_, err := collection.UpdateOne(ctx, filter, update)
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to update bookmark"})
+		}
+
+		statusMsg := "Bookmark removed"
+		if newStatus {
+			statusMsg = "Bookmark added"
+		}
+		return c.JSON(fiber.Map{"message": statusMsg, "bookmarked": newStatus})
+	}
+
+	// Bookmark doesn't exist, so we create it
+	newBookmark := models.HerbBookmark{
+		ID:        primitive.NewObjectID(),
+		HerbID:    herbID,
+		UserID:    userID,
+		Status:    true,
+		CreatedAt: time.Now(),
+	}
+
+	_, err = collection.InsertOne(ctx, newBookmark)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to add bookmark"})
+	}
+
+	return c.JSON(fiber.Map{"message": "Bookmark added", "bookmarked": true})
+}
+
+// GetHerbBookmarkStatus ดึงสถานะการบุ๊กมาร์กของสมุนไพรแต่ละตัว
+func GetHerbBookmarkStatus(c *fiber.Ctx) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	userID := middleware.GetUserID(c)
+	if userID == primitive.NilObjectID {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Unauthorized"})
+	}
+
+	herbID, err := primitive.ObjectIDFromHex(c.Params("id"))
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid herb ID"})
+	}
+
+	collection := database.GetCollection(herbBookmarkCollection)
+
+	filter := bson.M{"herb_id": herbID, "user_id": userID}
+	var existing models.HerbBookmark
+	err = collection.FindOne(ctx, filter).Decode(&existing)
+
+	if err != nil {
+		// Not found means not bookmarked
+		return c.JSON(fiber.Map{"bookmarked": false})
+	}
+
+	return c.JSON(fiber.Map{"bookmarked": existing.Status})
+}
+
+// GetAllBookmarkedHerbs ดึงข้อมูลสมุนไพรทั้งหมดที่ผู้ใช้บุ๊กมาร์กไว้
+func GetAllBookmarkedHerbs(c *fiber.Ctx) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	userID := middleware.GetUserID(c)
+	if userID == primitive.NilObjectID {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Unauthorized"})
+	}
+
+	collection := database.GetCollection(herbBookmarkCollection)
+
+	cursor, err := collection.Find(ctx, bson.M{"user_id": userID, "status": true})
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+	defer cursor.Close(ctx)
+
+	var bookmarks []models.HerbBookmark
+	if err := cursor.All(ctx, &bookmarks); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	if len(bookmarks) == 0 {
+		return c.JSON([]models.Herb{})
+	}
+
+	var herbIDs []primitive.ObjectID
+	for _, b := range bookmarks {
+		herbIDs = append(herbIDs, b.HerbID)
+	}
+
+	// ใช้ collectionName ("herbs") ที่มีอยู่แล้วในไฟล์นี้
+	herbColl := database.GetCollection(collectionName)
+	herbCursor, err := herbColl.Find(ctx, bson.M{"_id": bson.M{"$in": herbIDs}})
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+	defer herbCursor.Close(ctx)
+
+	var herbs []models.Herb
+	if err := herbCursor.All(ctx, &herbs); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
 
 	return c.JSON(herbs)
 }

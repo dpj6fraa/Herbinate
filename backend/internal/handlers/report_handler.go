@@ -17,13 +17,15 @@ const reportCollection = "reports"
 
 // ---- Validation ----
 
+// ---- Validation อัปเดตใหม่ ----
+
 var validTargetTypes = map[string]bool{
 	"herb":      true,
 	"article":   true,
-	"community": true,
+	"community": true, // สำหรับ Post
+	"comment":   true, // เพิ่มสำหรับ Comment
 }
 
-// เหตุผลที่ยอมรับได้แยกตาม target_type
 var validReasons = map[string][]string{
 	"herb": {
 		"ข้อมูลสรรพคุณไม่ถูกต้อง",
@@ -41,11 +43,18 @@ var validReasons = map[string][]string{
 		"โฆษณาแฝงหรือชักชวนซื้อสินค้า",
 		"อื่นๆ",
 	},
-	"community": {
+	"community": { // ใช้สำหรับ Post
 		"เนื้อหาก้าวร้าวหรือคุกคาม",
 		"ข้อมูลสุขภาพที่เป็นอันตราย",
 		"สแปมหรือโฆษณา",
 		"เนื้อหาไม่เหมาะสม",
+		"อื่นๆ",
+	},
+	"comment": { // เพิ่มใหม่
+		"ใช้ถ้อยคำไม่สุภาพ",
+		"สแปมหรือโฆษณา",
+		"ข้อมูลเท็จ",
+		"คุกคามหรือกลั่นแกล้ง",
 		"อื่นๆ",
 	},
 }

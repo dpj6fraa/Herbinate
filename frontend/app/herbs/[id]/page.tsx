@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import Nav from "../../components/Nav";
 import Footer from "../../components/Footer";
 import HerbReportModal from "../../components/HerbReportModal";
+import { Siren } from "lucide-react";
 
 const API = "http://localhost:8080";
 
@@ -120,18 +121,9 @@ export default function HerbDetailPage() {
             <button
               onClick={() => setIsReportOpen(true)}
               title="รายงานข้อมูล"
-              className="p-2 rounded-full hover:bg-red-50 transition-colors cursor-pointer"
+              className="p-2 -mr-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-full active:scale-90 transition-all"
             >
-              <svg
-                className="w-6 h-6 text-red-400"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={2}
-                viewBox="0 0 24 24"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3 3v18" />
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3 5h13l-4 4 4 4H3" />
-              </svg>
+            <Siren className="w-5 h-5" />
             </button>
           </div>
 

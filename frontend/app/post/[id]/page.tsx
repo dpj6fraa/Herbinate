@@ -5,7 +5,9 @@ import { useParams, useRouter } from "next/navigation";
 import Nav from "@/app/components/Nav";
 import Footer from "@/app/components/Footer";
 import ReportPostModal from "@/app/components/forcommunity/ReportPostModal";
+import CommentReportModal from "@/app/components/CommentReportModal"; // เพิ่มตัวนี้
 import { ArrowLeft, Heart, Upload, Siren, X } from "lucide-react";
+import PostReportModal from "@/app/components/PostreportModal";
 
 type ImageItem = { url: string; order: number };
 
@@ -197,7 +199,10 @@ export default function PostDetailPage() {
   const [loading, setLoading] = useState(true);
   const [commentText, setCommentText] = useState("");
   const [sending, setSending] = useState(false);
+  
+  // State สำหรับ Modals
   const [showReport, setShowReport] = useState(false);
+  const [selectedComment, setSelectedComment] = useState<{id: string, content: string} | null>(null);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
   useEffect(() => {
@@ -287,30 +292,24 @@ export default function PostDetailPage() {
 
   const sortedImages = [...(data.images ?? [])].sort((a, b) => a.order - b.order);
 
-  return (
+return (
     <div className="min-h-screen bg-white flex flex-col">
-      {/* Nav */}
       <div className="sticky top-0 w-full bg-white z-50 shadow-sm border-b-2 border-b-[#97DB8B]">
         <Nav />
       </div>
 
-      {/* content wrapper */}
       <div className="w-full max-w-2xl mx-auto px-4 md:px-6 pt-5 pb-10 flex flex-col gap-4">
-
-        {/* Post card */}
+        {/* Post Card */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-
-          {/* Top bar */}
           <div className="px-4 pt-4 pb-2 flex items-center justify-between">
-            <button
-              onClick={() => router.back()}
-              className="p-2 -ml-2 text-gray-500 hover:text-black hover:bg-gray-100 rounded-full active:scale-90 transition-all"
-            >
+            <button onClick={() => router.back()} className="p-2 -ml-2 text-gray-500 hover:text-black hover:bg-gray-100 rounded-full transition-all">
               <ArrowLeft className="w-5 h-5" />
             </button>
+            {/* ปุ่มรายงานโพสต์ */}
             <button
               onClick={() => setShowReport(true)}
               className="p-2 -mr-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-full active:scale-90 transition-all"
+              title="รายงานโพสต์"
             >
               <Siren className="w-5 h-5" />
             </button>
@@ -374,7 +373,7 @@ export default function PostDetailPage() {
           </div>
         </div>
 
-        {/* Comment section card */}
+        {/* Comment Section */}
         <div className="bg-gray-50 rounded-2xl border border-gray-100 px-4 py-5 mt-2">
           <h3 className="font-bold text-green-700 mb-4 text-[15px] border-b border-gray-200 pb-3">
             คอมเมนต์ ({data.post.comments})
@@ -399,38 +398,46 @@ export default function PostDetailPage() {
             </button>
           </div>
 
-          {/* List */}
-          {data.comments.length === 0 ? (
-            <div className="text-center py-6 bg-white rounded-xl border border-gray-100 border-dashed">
-              <p className="text-sm text-gray-400">ยังไม่มีคอมเมนต์ เป็นคนแรกที่แสดงความคิดเห็นสิ!</p>
-            </div>
-          ) : (
-            <div className="flex flex-col gap-3">
-              {data.comments.map((c) => (
-                <div key={c.id} className="bg-white border border-gray-100 shadow-sm rounded-xl p-3 flex gap-3 items-start transition-all hover:border-green-100">
-                  {c.profileImg ? (
-                    <img
-                      src={`http://localhost:8080${c.profileImg}`}
-                      className="w-10 h-10 rounded-full object-cover flex-shrink-0 shadow-sm"
-                    />
-                  ) : (
-                    <div className="w-10 h-10 rounded-full bg-green-400 flex items-center justify-center text-white font-bold text-sm flex-shrink-0 shadow-sm">
-                      {c.username?.[0]?.toUpperCase() ?? "?"}
-                    </div>
-                  )}
-                  <div className="flex flex-col flex-1 mt-0.5">
-                    <span className="font-bold text-green-700 text-[14px]">{c.username}</span>
-                    <p className="text-gray-700 text-[14px] leading-relaxed mt-1">{c.content}</p>
-                    <p className="text-gray-400 text-[11px] mt-1.5 font-medium">
-                      {new Date(c.created_at).toLocaleString("th-TH")}
-                    </p>
+        {/* List คอมเมนต์ */}
+          <div className="flex flex-col gap-3">
+            {data.comments.map((c) => (
+              <div 
+                key={c.id} 
+                className="bg-white border border-gray-100 shadow-sm rounded-xl py-3 pl-3 pr-3 flex gap-2 items-start group"
+              >
+                {/* ส่วนรูปโปรไฟล์ - จะชิดขอบซ้ายมากขึ้นเพราะ pl-2 */}
+                {c.profileImg ? (
+                  <img
+                    src={`http://localhost:8080${c.profileImg}`}
+                    className="w-10 h-10 rounded-full object-cover flex-shrink-0 shadow-sm"
+                  />
+                ) : (
+                  <div className="w-10 h-10 rounded-full bg-green-400 flex items-center justify-center text-white font-bold text-sm flex-shrink-0 shadow-sm">
+                    {c.username?.[0]?.toUpperCase() ?? "?"}
                   </div>
+                )}
+                <div className="flex flex-col flex-1 mt-0.5">
+                  <div className="flex justify-between items-start">
+                    <span className="font-bold text-green-700 text-[14px]">{c.username}</span>
+                    
+                  {/* ปุ่มรายงานคอมเมนต์ใหม่ (โชว์สีเทาตลอด เอาเมาส์ชี้เปลี่ยนเป็นสีแดง) */}
+                  <button 
+                    onClick={() => setSelectedComment({ id: c.id, content: c.content })}
+                    className="p-1 text-gray-300 hover:text-red-400 transition-all"
+                    title="รายงานคอมเมนต์"
+                  >
+                    <Siren className="w-4 h-4" />
+                  </button>
+                  </div>
+                  <p className="text-gray-700 text-[14px] leading-relaxed mt-1">{c.content}</p>
+                  <p className="text-gray-400 text-[11px] mt-1.5 font-medium">
+                    {new Date(c.created_at).toLocaleString("th-TH")}
+                  </p>
                 </div>
-              ))}
-            </div>
-          )}
+              </div>
+            ))}
+          </div>
         </div>
-
       </div>
 
       <Footer />
@@ -444,11 +451,22 @@ export default function PostDetailPage() {
         />
       )}
 
-      {/* Report Modal */}
+      {/* Modals */}
       {showReport && (
-        <ReportPostModal
+        <PostReportModal
+          isOpen={showReport}
+          postId={id as string} // ส่ง postId ไปด้วย
           postTitle={data.post.title}
           onClose={() => setShowReport(false)}
+        />
+      )}
+
+      {selectedComment && (
+        <CommentReportModal
+          isOpen={!!selectedComment}
+          onClose={() => setSelectedComment(null)}
+          commentId={selectedComment.id}
+          commentContent={selectedComment.content}
         />
       )}
     </div>
