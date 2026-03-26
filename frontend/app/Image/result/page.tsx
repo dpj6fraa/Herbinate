@@ -34,6 +34,18 @@ type PredictResult = {
     confidence: number;
     bbox: number[];
   }[];
+  ai_properties?: AiHerbData;
+};
+
+type AiPropertyItem = {
+  title: string;
+  details: string[];
+};
+
+type AiHerbData = {
+  plant_name_en: string;
+  plant_name_th: string;
+  properties: AiPropertyItem[];
 };
 
 export default function AiImageResultPage() {
@@ -43,6 +55,8 @@ export default function AiImageResultPage() {
   const [relatedHerbs, setRelatedHerbs] = useState<Herb[]>([]);
   const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
+  const [aiHerbData, setAiHerbData] = useState<AiHerbData | null>(null);
+  const [isAiLoading, setIsAiLoading] = useState(false);
 
   useEffect(() => {
     const raw = sessionStorage.getItem('herbResult');
@@ -59,6 +73,10 @@ export default function AiImageResultPage() {
 
       if (parsed.predictions && parsed.predictions.length > 0) {
         const primaryPrediction = parsed.predictions[0];
+
+        if (parsed.ai_properties) {
+          setAiHerbData(parsed.ai_properties);
+        }
 
         // Fetch herb details from backend using class_name
         fetch(`${API}/herbs`)
@@ -206,8 +224,37 @@ export default function AiImageResultPage() {
               </div>
             )}
 
+            {/* AI Properties Response */}
+            {isAiLoading ? (
+              <div className="mt-4 bg-[#F2FCED] border border-[#d2eac5] p-4 rounded-xl flex items-center gap-3">
+                <div className="w-5 h-5 border-2 border-[#1C7D29] border-t-transparent rounded-full animate-spin"></div>
+                <p className="text-sm text-green-800 font-medium">AI กำลังวิเคราะห์สรรพคุณ...</p>
+              </div>
+            ) : aiHerbData ? (
+              <div className="mt-4 bg-[#F2FCED] border border-[#d2eac5] p-5 rounded-xl shadow-sm">
+                <h3 className="font-bold text-[#1C7D29] mb-4 flex items-center gap-2 text-base">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill="currentColor" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                  สรรพคุณจาก {aiHerbData.plant_name_th}
+                </h3>
+                <div className="space-y-3">
+                  {aiHerbData.properties.map((prop, idx) => (
+                    <div key={idx} className="bg-white/70 p-3.5 rounded-lg border border-green-100 shadow-sm">
+                      <h4 className="font-semibold text-green-800 mb-2 text-sm">{prop.title}</h4>
+                      <ul className="list-disc pl-5 space-y-1">
+                        {prop.details.map((detail, dIdx) => (
+                          <li key={dIdx} className="text-gray-700 text-sm leading-relaxed">{detail}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+
             {/* No herb found fallback */}
-            {!herb && result.predictions && result.predictions.length > 0 && (
+            {!herb && !aiHerbData && result.predictions && result.predictions.length > 0 && (
               <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
                 <p className="text-gray-700 text-sm">
                   ผลลัพธ์: <span className="font-bold">{result.predictions[0].class_name}</span>

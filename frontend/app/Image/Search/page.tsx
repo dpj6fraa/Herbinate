@@ -34,7 +34,8 @@ export default function AiImagePage() {
     setError(null);
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_AI_IMAGE_URL || "http://localhost:8888";
+      const apiUrl = process.env.NEXT_PUBLIC_AI_IMAGE_URL || "http://localhost:8000";
+      const apiresult = process.env.NEXT_PUBLIC_AI_RESULT_URL || "http://localhost:888899";
       const formData = new FormData();
       formData.append('file', selectedFile);
 
@@ -53,6 +54,31 @@ export default function AiImagePage() {
       }
 
       const data = await response.json();
+
+      // Fetch AI properties using the primary prediction (if available)
+      if (data.predictions && data.predictions.length > 0) {
+        try {
+          const class_name = data.predictions[0].class_name;
+          const aiResponse = await fetch(`${apiresult}/api/herb-info`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ herb_name_en: class_name })
+          });
+          if (aiResponse.ok) {
+            const aiData = await aiResponse.json()
+            console.log(aiData);
+            if (aiData.status === 'success' && aiData.data) {
+              data.ai_properties = aiData.data;
+            } else {
+              console.warn("AI API รูปแบบไม่ถูกต้อง หรือสถานะไม่สำเร็จ:", aiData);
+            }
+          } else {
+            console.error("AI API error status:", aiResponse.status);
+          }
+        } catch (e) {
+          console.error("Failed to fetch ai properties", e);
+        }
+      }
 
       // Store result
       sessionStorage.setItem('herbResult', JSON.stringify(data));
@@ -208,7 +234,7 @@ export default function AiImagePage() {
           </div>
 
           {/* 2. เอาปุ่ม "กลับ" ออก (ลบโค้ดส่วน Back Button ทั้งหมด) */}
-          
+
         </div>
       </div>
       <Footer />
