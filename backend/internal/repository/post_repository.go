@@ -84,14 +84,16 @@ func (r *PostRepository) GetFeed() ([]bson.M, error) {
 			"as":           "comments",
 		}}},
 		{{Key: "$project", Value: bson.M{
-			"id":            "$_id",
-			"title":         1,
-			"content":       1,
-			"created_at":    1,
-			"username":      "$user.username",
-			"like_count":    bson.M{"$size": bson.M{"$ifNull": bson.A{"$likes", bson.A{}}}},
-			"comment_count": bson.M{"$size": "$comments"},
-			"share_count":   bson.M{"$size": bson.M{"$ifNull": bson.A{"$shares", bson.A{}}}},
+			"id":         "$_id",
+			"title":      1,
+			"content":    1,
+			"created_at": 1,
+			"username":   "$user.username",
+			// เพิ่มบรรทัดนี้ลงไป (เปลี่ยน $user.profileImg ตามชื่อ field จริงใน DB ของคุณ)
+			"profileImg": "$user.profile_image_url",
+			"likes":      bson.M{"$size": bson.M{"$ifNull": bson.A{"$likes", bson.A{}}}},
+			"comments":   bson.M{"$size": "$comments"},
+			"shares":     bson.M{"$size": bson.M{"$ifNull": bson.A{"$shares", bson.A{}}}},
 		}}},
 		{{Key: "$sort", Value: bson.M{"created_at": -1}}},
 	}
@@ -128,15 +130,17 @@ func (r *PostRepository) GetFeedWithUser(userID primitive.ObjectID) ([]bson.M, e
 			"as":           "comments",
 		}}},
 		{{Key: "$project", Value: bson.M{
-			"id":            "$_id",
-			"title":         1,
-			"content":       1,
-			"created_at":    1,
-			"username":      "$user.username",
-			"like_count":    bson.M{"$size": bson.M{"$ifNull": bson.A{"$likes", bson.A{}}}},
-			"comment_count": bson.M{"$size": "$comments"},
-			"share_count":   bson.M{"$size": bson.M{"$ifNull": bson.A{"$shares", bson.A{}}}},
-			"liked":         bson.M{"$in": bson.A{userID, bson.M{"$ifNull": bson.A{"$likes", bson.A{}}}}},
+			"id":         "$_id",
+			"title":      1,
+			"content":    1,
+			"created_at": 1,
+			"username":   "$user.username",
+			// เพิ่มบรรทัดนี้ลงไปเช่นกัน
+			"profileImg": "$user.profile_image_url",
+			"likes":      bson.M{"$size": bson.M{"$ifNull": bson.A{"$likes", bson.A{}}}},
+			"comments":   bson.M{"$size": "$comments"},
+			"shares":     bson.M{"$size": bson.M{"$ifNull": bson.A{"$shares", bson.A{}}}},
+			"liked":      bson.M{"$in": bson.A{userID, bson.M{"$ifNull": bson.A{"$likes", bson.A{}}}}},
 		}}},
 		{{Key: "$sort", Value: bson.M{"created_at": -1}}},
 	}
@@ -283,7 +287,7 @@ func (r *PostRepository) Share(postID, userID primitive.ObjectID) (bool, error) 
 	return result.ModifiedCount > 0, nil
 }
 
-func (r *PostRepository) GetPostDetail(postID primitive.ObjectID) (map[string]interface{}, error) {
+func (r *PostRepository) GetPostDetail(postID, userID primitive.ObjectID) (map[string]interface{}, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -303,15 +307,21 @@ func (r *PostRepository) GetPostDetail(postID primitive.ObjectID) (map[string]in
 			"as":           "comments",
 		}}},
 		{{Key: "$project", Value: bson.M{
-			"id":            "$_id",
-			"title":         1,
-			"content":       1,
-			"created_at":    1,
-			"username":      "$user.username",
-			"profileImg":    "$user.profile_image_url",
-			"likes":         bson.M{"$size": bson.M{"$ifNull": bson.A{"$likes", bson.A{}}}},
-			"comments":      bson.M{"$size": "$comments"},
-			"shares":        bson.M{"$size": bson.M{"$ifNull": bson.A{"$shares", bson.A{}}}},
+			"id":         "$_id",
+			"title":      1,
+			"content":    1,
+			"created_at": 1,
+			"username":   "$user.username",
+			"profileImg": "$user.profile_image_url",
+
+			"likes":    bson.M{"$size": bson.M{"$ifNull": bson.A{"$likes", bson.A{}}}},
+			"comments": bson.M{"$size": "$comments"},
+			"shares":   bson.M{"$size": bson.M{"$ifNull": bson.A{"$shares", bson.A{}}}},
+
+			// ✅ เพิ่มตรงนี้
+			"liked": bson.M{
+				"$in": bson.A{userID, bson.M{"$ifNull": bson.A{"$likes", bson.A{}}}},
+			},
 		}}},
 	}
 

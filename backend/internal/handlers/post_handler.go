@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -103,10 +104,25 @@ func (h *PostHandler) PostFeed(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to load feed"})
 	}
 
-	// Convert ObjectIDs to Hex strings for JSON response
+	// Convert ObjectIDs to Hex strings for JSON response & Fetch Images
 	for i := range feed {
 		if id, ok := feed[i]["id"].(primitive.ObjectID); ok {
 			feed[i]["id"] = id.Hex()
+
+			// --- ส่วนที่ต้องเพิ่ม: ดึงรูปภาพของแต่ละโพสต์แบบเดียวกับหน้า Detail ---
+			imagesData, _ := h.Posts.GetImages(id)
+			var images []map[string]interface{}
+
+			for _, img := range imagesData {
+				images = append(images, map[string]interface{}{
+					"url":   img.URL,
+					"order": img.Position, // หรือ img.Order ขึ้นอยู่กับ Struct ของคุณ
+				})
+			}
+
+			// แนบ array รูปภาพเข้าไปใน object ของโพสต์นั้นๆ
+			feed[i]["images"] = images
+			// --------------------------------------------------------
 		}
 	}
 
@@ -244,6 +260,8 @@ func (h *PostHandler) DeletePost(c *fiber.Ctx) error {
 
 func (h *PostHandler) PostDetail(c *fiber.Ctx) error {
 	postIDStr := c.Query("post_id")
+	userID := getUserIDFromContext(c)
+	fmt.Println("USER ID:", userID.Hex())
 	if postIDStr == "" {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "missing post_id"})
 	}
@@ -253,7 +271,7 @@ func (h *PostHandler) PostDetail(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid post_id"})
 	}
 
-	post, err := h.Posts.GetPostDetail(postID)
+	post, err := h.Posts.GetPostDetail(postID, userID)
 	if err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "post not found"})
 	}

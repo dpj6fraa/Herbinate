@@ -49,7 +49,7 @@ func SetupRoutes(app *fiber.App) {
 	// Posts routes
 	posts := api.Group("/posts")
 	posts.Post("/create", middleware.AuthMiddleware(), postHandler.CreatePost)
-	posts.Get("/detail", postHandler.PostDetail)
+	posts.Get("/detail", middleware.OptionalAuthMiddleware(), postHandler.PostDetail)
 	posts.Get("/feed", middleware.OptionalAuthMiddleware(), postHandler.PostFeed)
 	posts.Post("/like", middleware.AuthMiddleware(), postHandler.LikePost)
 	posts.Post("/unlike", middleware.AuthMiddleware(), postHandler.UnlikePost)
