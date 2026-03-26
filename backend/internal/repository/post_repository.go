@@ -308,6 +308,7 @@ func (r *PostRepository) GetPostDetail(postID, userID primitive.ObjectID) (map[s
 		}}},
 		{{Key: "$project", Value: bson.M{
 			"id":         "$_id",
+			"user_id":    1,
 			"title":      1,
 			"content":    1,
 			"created_at": 1,
@@ -382,4 +383,53 @@ func (r *PostRepository) GetCommentWithUser(commentID primitive.ObjectID) (model
 	}
 
 	return results[0], nil
+}
+
+func (r *PostRepository) DeleteComment(commentID, userID primitive.ObjectID) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	// ลบโดยเช็คทั้ง ID คอมเมนต์ และต้องเป็นของ User ที่สั่งลบเท่านั้น
+	result, err := r.CommentCollection.DeleteOne(ctx, bson.M{"_id": commentID, "user_id": userID})
+	if err != nil {
+		return err
+	}
+
+	// ถ้า DeletedCount เป็น 0 แปลว่าไม่พบคอมเมนต์ หรือไม่ใช่เจ้าของ
+	if result.DeletedCount == 0 {
+		return errors.New("comment not found or unauthorized")
+	}
+
+	return nil
+}
+
+// อัปเดตโพสต์
+// อัปเดตโพสต์
+func (r *PostRepository) UpdatePost(postID, userID primitive.ObjectID, title, content string, images []models.PostImage) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	// กันเหนียว กรณีไม่มีรูปภาพเลย
+	if images == nil {
+		images = []models.PostImage{}
+	}
+
+	update := bson.M{
+		"$set": bson.M{
+			"title":      title,
+			"content":    content,
+			"images":     images, // อัปเดต array รูปภาพใหม่ทับของเก่า
+			"updated_at": time.Now(),
+		},
+	}
+
+	// ต้องเช็คทั้ง _id และ user_id เพื่อความปลอดภัย
+	result, err := r.PostCollection.UpdateOne(ctx, bson.M{"_id": postID, "user_id": userID}, update)
+	if err != nil {
+		return err
+	}
+	if result.MatchedCount == 0 {
+		return errors.New("post not found or unauthorized")
+	}
+	return nil
 }

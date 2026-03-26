@@ -4,16 +4,18 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Nav from "@/app/components/Nav";
 import Footer from "@/app/components/Footer";
-import ReportPostModal from "@/app/components/forcommunity/ReportPostModal";
+import CreatePostModal from "@/app/components/forcommunity/CreatePostModal";
 import CommentReportModal from "@/app/components/CommentReportModal"; // เพิ่มตัวนี้
-import { ArrowLeft, Heart, Upload, Siren, X } from "lucide-react";
+import { ArrowLeft, Heart, Upload, Siren, X, Trash2, Pencil} from "lucide-react";
 import PostReportModal from "@/app/components/PostreportModal";
+
 
 type ImageItem = { url: string; order: number };
 
 type PostDetail = {
   post: {
     id: string;
+    user_id: string;
     title: string;
     content: string;
     createdAt: string;
@@ -169,6 +171,7 @@ function PostImageGrid({
   // 4+ ภาพ
   const shown = sorted.slice(0, 4);
   const extra = sorted.length - 4;
+  
   return (
     <div className="grid grid-cols-2 gap-0.5">
       {shown.map((img, i) => (
@@ -205,8 +208,24 @@ export default function PostDetailPage() {
   const [selectedComment, setSelectedComment] = useState<{id: string, content: string} | null>(null);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  
+  const [isEditing, setIsEditing] = useState(false);
+  
   useEffect(() => {
     const token = localStorage.getItem("token");
+    
+    // พยายามแกะ user_id จาก JWT token (คุณอาจจะเก็บ user_id ไว้ใน localStorage โดยตรงก็ได้)
+    if (token) {
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        setCurrentUserId(payload.user_id || payload.id || payload.sub); 
+      } catch (e) {
+        // Fallback ถ้าไม่ได้ใช้ JWT ปกติ ให้ดึงจากที่เก็บไว้
+        setCurrentUserId(localStorage.getItem("user_id"));
+      }
+    }
+
     fetch(`http://localhost:8080/api/posts/detail?post_id=${id}`, {
       headers: token ? { Authorization: `Bearer ${token}` } : {},
     })
@@ -278,6 +297,53 @@ export default function PostDetailPage() {
     }
   }
 
+  // เพิ่มฟังก์ชันลบโพสต์
+  async function deletePost() {
+    if (!confirm("คุณต้องการลบโพสต์นี้ใช่หรือไม่?")) return;
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    try {
+      const res = await fetch(`http://localhost:8080/api/posts/delete?post_id=${id}`, {
+        method: "DELETE", // เช็ค method ที่ Router Backend ของคุณด้วยนะครับ
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        alert("ลบโพสต์เรียบร้อยแล้ว");
+        router.push("/"); // กลับไปหน้าแรก
+      } else {
+        alert("ลบโพสต์ไม่สำเร็จ");
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  // เพิ่มฟังก์ชันลบคอมเมนต์
+  async function deleteComment(commentId: string) {
+    if (!confirm("คุณต้องการลบคอมเมนต์นี้ใช่หรือไม่?")) return;
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    try {
+      const res = await fetch(`http://localhost:8080/api/posts/comment?comment_id=${commentId}`, {
+        method: "DELETE", // เช็ค method ที่ Router Backend ของคุณด้วยนะครับ
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        setData((prev) => prev ? {
+          ...prev,
+          comments: prev.comments.filter(c => c.id !== commentId),
+          post: { ...prev.post, comments: prev.post.comments - 1 }
+        } : prev);
+      } else {
+        alert("ลบคอมเมนต์ไม่สำเร็จ");
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
   const LoadingOrError = ({ msg }: { msg: string }) => (
     <div className="min-h-screen bg-white flex flex-col">
       <div className="sticky top-0 z-50 bg-white shadow-sm border-b-2 border-b-[#97DB8B]"><Nav /></div>
@@ -305,14 +371,37 @@ return (
             <button onClick={() => router.back()} className="p-2 -ml-2 text-gray-500 hover:text-black hover:bg-gray-100 rounded-full transition-all">
               <ArrowLeft className="w-5 h-5" />
             </button>
-            {/* ปุ่มรายงานโพสต์ */}
-            <button
-              onClick={() => setShowReport(true)}
-              className="p-2 -mr-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-full active:scale-90 transition-all"
-              title="รายงานโพสต์"
-            >
-              <Siren className="w-5 h-5" />
-            </button>
+              <div className="flex items-center gap-1">
+              {/* ปุ่มลบโพสต์ (แสดงเฉพาะเจ้าของโพสต์) */}
+              {currentUserId === data.post.user_id && (
+                <>
+                  <button
+                    onClick={() => setIsEditing(true)}
+                    className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-full active:scale-90 transition-all"
+                    title="แก้ไขโพสต์"
+                  >
+                    <Pencil className="w-5 h-5" />
+                  </button>
+                <button
+                  onClick={deletePost}
+                  className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-full active:scale-90 transition-all"
+                  title="ลบโพสต์"
+                >
+                  <Trash2 className="w-5 h-5" />
+                </button>
+                </>
+              )}
+              
+
+              {/* ปุ่มรายงานโพสต์ */}
+              <button
+                onClick={() => setShowReport(true)}
+                className="p-2 -mr-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-full active:scale-90 transition-all"
+                title="รายงานโพสต์"
+              >
+                <Siren className="w-5 h-5" />
+              </button>
+            </div>
           </div>
 
           {/* Author */}
@@ -419,6 +508,17 @@ return (
                 <div className="flex flex-col flex-1 mt-0.5">
                   <div className="flex justify-between items-start">
                     <span className="font-bold text-green-700 text-[14px]">{c.username}</span>
+                  <div className="flex items-center gap-1">
+                      {/* ปุ่มลบคอมเมนต์ (แสดงเฉพาะเจ้าของคอมเมนต์) */}
+                      {currentUserId === c.user_id && (
+                        <button 
+                          onClick={() => deleteComment(c.id)}
+                          className="p-1 text-gray-300 hover:text-red-600 transition-all"
+                          title="ลบคอมเมนต์"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
                     
                   {/* ปุ่มรายงานคอมเมนต์ใหม่ (โชว์สีเทาตลอด เอาเมาส์ชี้เปลี่ยนเป็นสีแดง) */}
                   <button 
@@ -428,6 +528,7 @@ return (
                   >
                     <Siren className="w-4 h-4" />
                   </button>
+                  </div>
                   </div>
                   <p className="text-gray-700 text-[14px] leading-relaxed mt-1">{c.content}</p>
                   <p className="text-gray-400 text-[11px] mt-1.5 font-medium">
@@ -469,6 +570,21 @@ return (
           commentContent={selectedComment.content}
         />
       )}
+
+      {isEditing && (
+      <CreatePostModal 
+        modalType="edit"
+        postId={id as string}
+        initialTitle={data.post.title}
+        initialContent={data.post.content}
+        initialImages={data.images}
+        onClose={() => setIsEditing(false)}
+        onSuccess={() => {
+          // ทำการ fetch ข้อมูลใหม่ หรืออัปเดต State data ปัจจุบัน
+          window.location.reload(); // วิธีง่ายสุดคือ Reload หน้า
+    }}
+  />
+)}
     </div>
   );
 }

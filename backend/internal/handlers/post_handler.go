@@ -215,6 +215,24 @@ func (h *PostHandler) GetComments(c *fiber.Ctx) error {
 	return c.JSON(comments)
 }
 
+// ---------- DELETE COMMENT ----------
+func (h *PostHandler) DeleteComment(c *fiber.Ctx) error {
+	userID := getUserIDFromContext(c)
+	commentIDStr := c.Query("comment_id")
+
+	commentID, err := primitive.ObjectIDFromHex(commentIDStr)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid comment_id"})
+	}
+
+	// เรียกไปยัง Repository เพื่อลบคอมเมนต์ โดยตรวจสอบ userID ด้วย
+	if err := h.Posts.DeleteComment(commentID, userID); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "delete comment failed"})
+	}
+
+	return c.SendStatus(fiber.StatusOK)
+}
+
 // ---------- SHARE ----------
 func (h *PostHandler) SharePost(c *fiber.Ctx) error {
 	userID := getUserIDFromContext(c)
@@ -304,4 +322,82 @@ func (h *PostHandler) PostDetail(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(resp)
+}
+
+func (h *PostHandler) EditPost(c *fiber.Ctx) error {
+	userID := getUserIDFromContext(c)
+
+	// 1. รับค่า Text จาก Form
+	postIDStr := c.FormValue("post_id")
+	title := c.FormValue("title")
+	content := c.FormValue("content")
+
+	if postIDStr == "" || title == "" || content == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "missing required fields"})
+	}
+
+	postID, err := primitive.ObjectIDFromHex(postIDStr)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid post_id"})
+	}
+
+	// 2. จัดการรูปภาพ (รูปเก่าที่เก็บไว้ + รูปใหม่ที่อัปโหลด)
+	var finalImages []models.PostImage
+	position := 0
+
+	form, err := c.MultipartForm()
+	if err == nil {
+		// --- ดึงรูปภาพเก่าที่ไม่ได้ถูกลบ ---
+		if keptImages, ok := form.Value["kept_images"]; ok {
+			for _, url := range keptImages {
+				finalImages = append(finalImages, models.PostImage{
+					ID:       primitive.NewObjectID(),
+					URL:      url, // path เดิมของรูป
+					Position: position,
+				})
+				position++
+			}
+		}
+
+		// --- เซฟรูปภาพใหม่ที่เพิ่งอัปโหลด ---
+		if newFiles, ok := form.File["new_images"]; ok {
+			uploadDir := "./uploads/posts/"
+			os.MkdirAll(uploadDir, os.ModePerm)
+
+			for _, fileHeader := range newFiles {
+				file, err := fileHeader.Open()
+				if err != nil {
+					continue
+				}
+				defer file.Close()
+
+				ext := filepath.Ext(fileHeader.Filename)
+				filename := uuid.NewString() + ext
+				filePath := uploadDir + filename
+
+				dst, err := os.Create(filePath)
+				if err != nil {
+					continue
+				}
+				defer dst.Close()
+
+				io.Copy(dst, file)
+
+				imageURL := "/uploads/posts/" + filename
+				finalImages = append(finalImages, models.PostImage{
+					ID:       primitive.NewObjectID(),
+					URL:      imageURL,
+					Position: position,
+				})
+				position++
+			}
+		}
+	}
+
+	// 3. เรียก Repository เพื่ออัปเดตข้อมูลทั้งหมดรวมถึงรูปภาพ
+	if err := h.Posts.UpdatePost(postID, userID, title, content, finalImages); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "update failed"})
+	}
+
+	return c.SendStatus(fiber.StatusOK)
 }

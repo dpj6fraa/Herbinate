@@ -188,7 +188,7 @@ export default function FeedPage() {
       className="mb-4 border border-gray-200 rounded-2xl overflow-hidden shadow-sm bg-white flex flex-col transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 group cursor-pointer"
     >
       {/* Header */}
-      <div className="bg-[#D9F2C7] px-4 py-3 flex items-center gap-3 transition-colors duration-300 group-hover:bg-[#cbeba3]">
+      <div className="bg-[#e4ffea] px-4 py-3 flex items-center gap-3 transition-colors duration-300 group-hover:bg-[#d8f5d0]">
         {post.profileImg ? (
           <img
             src={`http://localhost:8080${post.profileImg}`}
