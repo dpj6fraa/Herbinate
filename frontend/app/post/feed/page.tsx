@@ -19,7 +19,7 @@ type FeedPost = {
   title: string;
   content: string;
   username: string;
-  profileImg?: string; // เพิ่มฟิลด์สำหรับรูป Profile
+  profileImg?: string;
   createdAt: string;
   created_at?: string;
   likes: number;
@@ -33,6 +33,12 @@ type FeedPost = {
 export default function FeedPage() {
   const [posts, setPosts] = useState<FeedPost[]>([]);
   const [showCreate, setShowCreate] = useState(false);
+  
+  // 🌟 1. เพิ่ม State สำหรับเก็บคำค้นหา
+  const [searchQuery, setSearchQuery] = useState("");
+  // 🌟 เพิ่ม State เลือกว่าจะดูแบบไหน (ค่าเริ่มต้นคือล่าสุด)
+  const [feedSort, setFeedSort] = useState<"newest" | "trending">("newest");
+  
   const router = useRouter();
 
   useEffect(() => {
@@ -84,9 +90,41 @@ export default function FeedPage() {
     }
   }
 
+  // 🌟 2. สร้างฟังก์ชันกรองข้อมูล (Filter) ตาม Title, Content และ Username
+// 🌟 ประมวลผลโพสต์: ค้นหา -> กรองวันที่ (ถ้าเลือกฮิต) -> เรียงลำดับ
+  const processedPosts = posts
+    .filter((p) => {
+      // 1. กรองคำค้นหา (Search)
+      const query = searchQuery.toLowerCase();
+      return (
+        p.title?.toLowerCase().includes(query) ||
+        p.content?.toLowerCase().includes(query) ||
+        p.username?.toLowerCase().includes(query)
+      );
+    })
+    .filter((p) => {
+      // 2. กรองเวลา (ถ้าเลือกโหมด "ยอดฮิต" ให้อยู่ใน 7 วัน)
+      if (feedSort === "trending") {
+        const postDate = new Date(p.created_at ?? p.createdAt);
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+        return postDate >= sevenDaysAgo;
+      }
+      return true; // โหมด "ล่าสุด" ให้แสดงทั้งหมด
+    })
+    .sort((a, b) => {
+      // 3. เรียงลำดับ (Sort)
+      if (feedSort === "trending") {
+        return b.likes - a.likes; // ยอดไลก์ มาก -> น้อย
+      } else {
+        const dateA = new Date(a.created_at ?? a.createdAt).getTime();
+        const dateB = new Date(b.created_at ?? b.createdAt).getTime();
+        return dateB - dateA; // วันที่ ใหม่ -> เก่า
+      }
+    });
+
   // แสดงภาพในการ์ด — สไตล์ Facebook album
   function PostImages({ post }: { post: FeedPost }) {
-    // รองรับทั้ง images[] และ image (fallback)
     const sorted = post.images?.length
       ? [...post.images].sort((a, b) => a.order - b.order)
       : post.image
@@ -94,7 +132,6 @@ export default function FeedPage() {
       : [];
 
     if (sorted.length === 0) return null;
-
     const base = "http://localhost:8080";
 
     if (sorted.length === 1) {
@@ -126,7 +163,6 @@ export default function FeedPage() {
       );
     }
 
-    // 4+ ภาพ — แสดง 4 แรก + overlay "+N"
     const shown = sorted.slice(0, 4);
     const extra = sorted.length - 4;
     return (
@@ -145,17 +181,17 @@ export default function FeedPage() {
     );
   }
 
-const renderPostCard = (post: FeedPost) => (
+  const renderPostCard = (post: FeedPost) => (
     <div
       key={post.id}
-      onClick={() => router.push(`/post/${post.id}`)} // ย้าย onClick มาที่ตัวการ์ดหลัก
-      className="mb-4 border border-gray-200 rounded-2xl overflow-hidden shadow-sm bg-white flex flex-col transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 group cursor-pointer" // เพิ่ม cursor-pointer
+      onClick={() => router.push(`/post/${post.id}`)}
+      className="mb-4 border border-gray-200 rounded-2xl overflow-hidden shadow-sm bg-white flex flex-col transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 group cursor-pointer"
     >
       {/* Header */}
       <div className="bg-[#D9F2C7] px-4 py-3 flex items-center gap-3 transition-colors duration-300 group-hover:bg-[#cbeba3]">
         {post.profileImg ? (
           <img
-            src={`http://localhost:8080${post.profileImg}`} // ตรวจสอบว่า path รูปถูกต้อง
+            src={`http://localhost:8080${post.profileImg}`}
             className="w-10 h-10 rounded-full object-cover shadow-sm flex-shrink-0"
             alt={post.username}
           />
@@ -173,7 +209,7 @@ const renderPostCard = (post: FeedPost) => (
       </div>
 
       {/* Text content */}
-      <div className="px-4 pt-3 pb-2"> {/* ลบ onClick เดิมออก */}
+      <div className="px-4 pt-3 pb-2">
         <h3 className="font-bold text-green-600 mb-1 leading-tight text-[15px] group-hover:text-green-700 transition-colors">
           {post.title}
         </h3>
@@ -182,8 +218,8 @@ const renderPostCard = (post: FeedPost) => (
         </p>
       </div>
 
-      {/* Images (full-bleed, no padding) */}
-      <div className="overflow-hidden"> {/* ลบ onClick เดิมออก */}
+      {/* Images */}
+      <div className="overflow-hidden">
         <PostImages post={post} />
       </div>
 
@@ -202,7 +238,6 @@ const renderPostCard = (post: FeedPost) => (
             }`}>{post.likes}</span>
           </button>
 
-          {/* ปุ่มคอมเมนต์ไม่ต้องมี onClick เพื่อเปลี่ยนหน้าแล้ว เพราะกดการ์ดก็ไปหน้า details อยู่ดี (หรือจะเก็บไว้แล้วใส่ stopPropagation ก็ได้) */}
           <button
             onClick={(e) => e.stopPropagation()} 
             className="flex items-center gap-1.5 p-1.5 rounded-lg hover:bg-green-50 active:scale-95 transition-all group/comment"
@@ -225,32 +260,49 @@ const renderPostCard = (post: FeedPost) => (
 
   return (
     <div className="min-h-screen bg-white flex flex-col w-full relative">
-
-      {/* Nav */}
       <div className="w-full sticky top-0 z-50 shadow-sm bg-white">
         <Nav />
       </div>
 
-      {/* content wrapper — กว้างขึ้นบน desktop */}
       <main className="w-full max-w-2xl mx-auto flex-1 flex flex-col px-4 md:px-6 pt-5 pb-6">
-
-        {/* Search & Filter — มุมโค้ง */}
+{/* Search & Sort */}
         <div className="bg-white rounded-2xl shadow-sm px-4 py-3 mb-4 flex gap-2 items-center border border-gray-100">
           <div className="relative flex-1 group">
             <input
               type="text"
-              placeholder="ค้นหาโพสต์"
+              placeholder="ค้นหาโพสต์, เนื้อหา, หรือชื่อผู้โพสต์..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full border border-gray-200 rounded-full pl-4 pr-10 py-1.5 text-sm text-gray-700 outline-none focus:border-green-500 focus:ring-2 focus:ring-green-100 transition-all duration-300 bg-gray-50"
             />
             <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 group-focus-within:text-green-500 transition-colors" />
           </div>
-          <button className="border border-gray-200 rounded-full px-3 py-1.5 flex items-center gap-1.5 text-xs font-medium text-gray-700 whitespace-nowrap bg-gray-50 hover:bg-gray-100 active:scale-95 transition-all">
-            <Filter className="w-[14px] h-[14px]" /> ทุกหมวดหมู่
+          
+          {/* 🌟 ปุ่มสลับโหมด กดแล้วเปลี่ยนเป็นยอดฮิต/ล่าสุด */}
+          <button 
+            onClick={() => setFeedSort(prev => prev === "newest" ? "trending" : "newest")}
+            className={`border rounded-full px-3 py-1.5 flex items-center gap-1.5 text-xs font-medium whitespace-nowrap transition-all active:scale-95 ${
+              feedSort === "trending" 
+                ? "bg-green-50 border-green-200 text-green-700 hover:bg-green-100" 
+                : "bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100"
+            }`}
+          >
+            <Filter className={`w-[14px] h-[14px] ${feedSort === "trending" ? "text-green-600" : ""}`} /> 
+            {feedSort === "newest" ? "โพสต์ล่าสุด" : "ยอดฮิต (7 วัน)"}
           </button>
         </div>
 
-        {/* Posts */}
-        <div>{posts.map(renderPostCard)}</div>
+        {/* 🌟 แสดงผลโดยใช้ processedPosts */}
+        <div>
+          {processedPosts.length > 0 ? (
+            processedPosts.map(renderPostCard)
+          ) : (
+            <div className="text-center py-10 text-gray-500 flex flex-col items-center gap-2">
+              <span className="text-4xl">🪴</span>
+              ไม่พบโพสต์ที่คุณกำลังมองหา
+            </div>
+          )}
+        </div>
       </main>
 
       {/* FAB */}

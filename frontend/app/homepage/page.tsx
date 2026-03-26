@@ -56,10 +56,10 @@ function SearchBar() {
   // โหลดข้อมูลมาเตรียมไว้ตอนเปิดหน้าเว็บ
   useEffect(() => {
     Promise.all([
-      fetch(`${API}/api/herbs`).then(res => res.ok ? res.json() : []),
-      fetch(`${API}/api/articles`).then(res => res.ok ? res.json() : []),
+      fetch(`${API}/herbs`).then(res => res.ok ? res.json() : []),
+      fetch(`${API}/articles`).then(res => res.ok ? res.json() : []),
       // 🌟🌟 แก้ URL ตรงนี้ให้ชี้ไปที่ /api/posts/feed ตาม routes.go ของคุณ
-      fetch(`${API}/api/posts/feed`).then(res => res.ok ? res.json() : [])
+      fetch(`${API}/posts/feed`).then(res => res.ok ? res.json() : [])
     ])
       .then(([herbsData, articlesData, postsData]) => {
 
