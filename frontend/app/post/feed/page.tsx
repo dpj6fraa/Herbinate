@@ -64,40 +64,51 @@ useEffect(() => {
     const fetchFeedAndUser = async () => {
       const token = localStorage.getItem("token");
       
-      // 🌟 1. ถอดรหัส Token และระบุ Type ป้องกันตัวแดง
+      // ถอดรหัส Token และระบุ Type ป้องกันตัวแดง
       let parsedUserId: string | null = null;
       if (token) {
         try {
-          // บอก TypeScript ว่า payload มีหน้าตาแบบนี้นะ
           const payload = JSON.parse(atob(token.split('.')[1])) as { 
             user_id?: string; 
             id?: string; 
             sub?: string 
           };
-          // ดึงค่ามา ถ้าไม่มีเลยให้เป็น null
           parsedUserId = payload.user_id || payload.id || payload.sub || null;
         } catch (e) {
           parsedUserId = localStorage.getItem("user_id");
         }
       }
 
-      // 🌟 2. โหลดข้อมูลโพสต์
+      // โหลดข้อมูลโพสต์
       try {
         const res = await fetch("http://localhost:8080/api/posts/feed", {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
         });
+
+        // 🌟 3. ดักจับ Status 401 ก่อนที่จะสั่ง .json()
+        if (res.status === 401) {
+          console.warn("Unauthorized: Redirecting to login...");
+          router.push("/login"); // เด้งไปหน้า login
+          return; // หยุดการทำงานของฟังก์ชันนี้ทันที เพื่อไม่ให้ไปบรรทัด .json()
+        }
+
+        // เช็คเผื่อกรณี Error อื่นๆ (เช่น 500) จะได้ไม่พังตอนแปลง JSON
+        if (!res.ok) {
+          throw new Error(`Error HTTP Status: ${res.status}`);
+        }
+
         const data = await res.json();
         
-        // 🌟 3. อัปเดต State พร้อมกัน เพื่อลดการ Render ซ้ำซ้อน (แก้ Error)
+        // อัปเดต State พร้อมกัน เพื่อลดการ Render ซ้ำซ้อน
         setCurrentUserId(parsedUserId);
-        setPosts(data);
+        setPosts(Array.isArray(data) ? data : data?.data || data?.posts || []);
       } catch (err) {
         console.error("Failed to fetch feed:", err);
       }
     };
 
     fetchFeedAndUser();
-  }, []);
+}, [router]);
 
   async function toggleLike(postID: string, liked?: boolean) {
     const token = localStorage.getItem("token");

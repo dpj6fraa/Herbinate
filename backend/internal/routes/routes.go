@@ -49,8 +49,10 @@ func SetupRoutes(app *fiber.App) {
 	// Posts routes
 	posts := api.Group("/posts")
 	posts.Post("/create", middleware.AuthMiddleware(), postHandler.CreatePost)
-	posts.Get("/detail", middleware.OptionalAuthMiddleware(), postHandler.PostDetail)
 	posts.Get("/feed", middleware.OptionalAuthMiddleware(), postHandler.PostFeed)
+	posts.Get("/bookmarks", middleware.AuthMiddleware(), postHandler.GetAllBookmarkedPosts) // ✅ ขึ้นมาก่อน /:id
+	posts.Get("/my-comments", middleware.AuthMiddleware(), postHandler.GetMyComments)       // ✅ ขึ้นมาก่อน /:id
+	posts.Get("/detail", middleware.OptionalAuthMiddleware(), postHandler.PostDetail)
 	posts.Post("/like", middleware.AuthMiddleware(), postHandler.LikePost)
 	posts.Post("/unlike", middleware.AuthMiddleware(), postHandler.UnlikePost)
 	posts.Post("/comment", middleware.AuthMiddleware(), postHandler.AddComment)
@@ -59,8 +61,6 @@ func SetupRoutes(app *fiber.App) {
 	posts.Delete("/delete", middleware.AuthMiddleware(), postHandler.DeletePost)
 	posts.Delete("/comment", middleware.AuthMiddleware(), postHandler.DeleteComment)
 	posts.Put("/edit", middleware.AuthMiddleware(), postHandler.EditPost)
-	posts.Get("/my-comments", middleware.AuthMiddleware(), postHandler.GetMyComments)
-	// Routes สำหรับ Bookmark Posts
 	posts.Post("/bookmark", middleware.AuthMiddleware(), postHandler.ToggleBookmarkPost)
 	posts.Get("/bookmark/status", middleware.AuthMiddleware(), postHandler.GetPostBookmarkStatus)
 

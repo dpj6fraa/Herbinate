@@ -95,14 +95,20 @@ func (h *PostHandler) CreatePost(c *fiber.Ctx) error {
 func (h *PostHandler) PostFeed(c *fiber.Ctx) error {
 	userID := getUserIDFromContext(c)
 
+	// 🚨 เช็คว่าถ้าไม่ได้ Login ให้ส่ง Status 401 กลับไปบอก Frontend
+	if userID == primitive.NilObjectID {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error":   "unauthorized",
+			"message": "Please login to view feed",
+		})
+	}
+
 	var feed []primitive.M
 	var err error
 
-	if userID != primitive.NilObjectID {
-		feed, err = h.Posts.GetFeedWithUser(userID)
-	} else {
-		feed, err = h.Posts.GetFeed()
-	}
+	// 🚨 2. เนื่องจากผ่านการเช็คด้านบนมาแล้ว แปลว่า Login แน่นอน
+	// จึงเหลือแค่การเรียก GetFeedWithUser
+	feed, err = h.Posts.GetFeedWithUser(userID)
 
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to load feed"})
@@ -113,7 +119,7 @@ func (h *PostHandler) PostFeed(c *fiber.Ctx) error {
 		if id, ok := feed[i]["id"].(primitive.ObjectID); ok {
 			feed[i]["id"] = id.Hex()
 
-			// --- ส่วนที่ต้องเพิ่ม: ดึงรูปภาพของแต่ละโพสต์แบบเดียวกับหน้า Detail ---
+			// ดึงรูปภาพของแต่ละโพสต์
 			imagesData, _ := h.Posts.GetImages(id)
 			var images []map[string]interface{}
 
@@ -126,7 +132,6 @@ func (h *PostHandler) PostFeed(c *fiber.Ctx) error {
 
 			// แนบ array รูปภาพเข้าไปใน object ของโพสต์นั้นๆ
 			feed[i]["images"] = images
-			// --------------------------------------------------------
 		}
 	}
 
@@ -497,7 +502,9 @@ func (h *PostHandler) GetPostBookmarkStatus(c *fiber.Ctx) error {
 func (h *PostHandler) GetAllBookmarkedPosts(c *fiber.Ctx) error {
 	userID := getUserIDFromContext(c)
 	if userID == primitive.NilObjectID {
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Unauthorized"})
+		// เปลี่ยนจาก return Unauthorized JSON
+		// เป็น redirect ไปหน้า login แทน
+		return c.Redirect("/login", fiber.StatusFound)
 	}
 
 	feed, err := h.Posts.GetBookmarkedPosts(userID)

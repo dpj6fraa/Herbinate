@@ -420,7 +420,7 @@ return (
         <Nav />
       </div>
 
-      <div className="w-full max-w-2xl mx-auto px-4 md:px-6 pt-5 pb-10 flex flex-col gap-4">
+      <div className="w-full max-w-2xl mx-auto px-4 md:px-6 pt-5 pb-10 flex flex-col gap-4 flex-1">
         {/* Post Card */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
           
