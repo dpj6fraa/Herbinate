@@ -96,5 +96,5 @@ func (s *EmailService) SendPasswordResetOTP(toEmail, otp string) error {
 	)
 
 	addr := s.Host + ":" + s.Port
-	return smtp.SendMail(addr, auth, s.From, []string{toEmail}, msg)
+	return smtp.SendMail(addr, auth, s.Username, []string{toEmail}, msg)
 }

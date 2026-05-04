@@ -245,6 +245,7 @@ func ResendOTP(c *fiber.Ctx) error {
 // ==========================================
 
 // ForgotPassword รับ email และส่ง OTP สำหรับตั้งรหัสใหม่
+// ForgotPassword รับ email และส่ง OTP สำหรับตั้งรหัสใหม่
 func ForgotPassword(c *fiber.Ctx) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -265,17 +266,25 @@ func ForgotPassword(c *fiber.Ctx) error {
 	var user models.User
 	err := collection.FindOne(ctx, bson.M{"email": body.Email}).Decode(&user)
 	if err != nil {
-		// ส่ง 404 กลับไปถ้าไม่พบอีเมล เพื่อความปลอดภัยหรือให้ผู้ใช้รู้ว่าพิมพ์ผิด
-		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "User with this email not found"})
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "ไม่พบอีเมลนี้ในระบบ"})
 	}
+
+	// 🌟🌟🌟 เพิ่มการเช็ค Provider ตรงนี้ 🌟🌟🌟
+	// ถ้า Provider ไม่ว่างเปล่า และไม่ได้เป็น "local" แสดงว่าเป็น Social Login
+	if user.Provider != "" && user.Provider != "local" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "อีเมลนี้เข้าสู่ระบบผ่านระบบอื่น ไม่สามารถรีเซ็ตรหัสผ่านได้ กรุณาเข้าสู่ระบบด้วยบัญชีเดิมของคุณ",
+			// หรือจะระบุชื่อ Provider ไปเลยก็ได้ เช่น "บัญชีนี้เชื่อมต่อกับ " + user.Provider
+		})
+	}
+	// 🌟🌟🌟 สิ้นสุดส่วนที่เพิ่มใหม่ 🌟🌟🌟
 
 	// 2. สร้าง OTP ใหม่ และบันทึกลง Redis/DB
 	code := generateOTP()
-	_ = otpRepo.SaveOTP(user.Email, code, 10*time.Minute) // ให้เวลา 10 นาทีสำหรับรีเซ็ต
+	_ = otpRepo.SaveOTP(user.Email, code, 10*time.Minute)
 
 	// 3. ส่งอีเมลพร้อม OTP
 	emailService := service.NewEmailService()
-	// เรียกใช้ฟังก์ชันที่เราเพิ่งสร้างไปใน EmailService
 	if err := emailService.SendPasswordResetOTP(user.Email, code); err != nil {
 		fmt.Println("SMTP ERROR:", err)
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to send reset OTP"})

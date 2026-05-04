@@ -106,4 +106,8 @@ func SetupRoutes(app *fiber.App) {
 	admin.Get("/reports", handlers.GetReports)
 	admin.Get("/reports/:id", handlers.GetReportByID)
 	admin.Patch("/reports/:id", handlers.UpdateReportStatus)
+
+	authGoogle := app.Group("/api/auth")
+	authGoogle.Get("/google", handlers.GoogleLogin)
+	authGoogle.Get("/google/callback", handlers.GoogleCallback)
 }
