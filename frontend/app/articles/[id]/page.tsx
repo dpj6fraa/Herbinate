@@ -6,6 +6,7 @@ import Nav from "../../components/Nav";
 import Footer from "../../components/Footer";
 import ArticleReportModal from "../../components/ArticlereportModal";
 import { Siren } from "lucide-react";
+import { getImageUrl } from "@/lib/media";
 
 const API = "http://localhost:8080";
 
@@ -121,7 +122,7 @@ export default function ArticleDetailPage() {
     );
   }
 
-  const imageURL = article.image_url ? `${API}${article.image_url}` : null;
+  const imageURL = getImageUrl(article.image_url, "");
   const sortedSections = [...(article.sections ?? [])].sort(
     (a, b) => a.position - b.position
   );

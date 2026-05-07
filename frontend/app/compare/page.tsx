@@ -19,7 +19,7 @@ export type Herb = {
     }[];
 };
 
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:8080";
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 
 export default function ComparePage() {
     const router = useRouter();
@@ -316,8 +316,8 @@ export default function ComparePage() {
                         onClick={handleCompare}
                         disabled={selectedHerbs.length < 2}
                         className={`shadow-lg rounded-xl px-5 py-3 font-bold text-sm sm:text-base flex items-center gap-2 transition-all ${selectedHerbs.length >= 2
-                                ? "bg-[#65B741] text-white hover:bg-[#529e32] active:scale-95 hover:-translate-y-1"
-                                : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                            ? "bg-[#65B741] text-white hover:bg-[#529e32] active:scale-95 hover:-translate-y-1"
+                            : "bg-gray-300 text-gray-500 cursor-not-allowed"
                             }`}
                     >
                         เปรียบเทียบ ({selectedHerbs.length}/3)

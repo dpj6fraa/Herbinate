@@ -7,8 +7,8 @@ import (
 
 func SetupCORS() fiber.Handler {
 	return cors.New(cors.Config{
-		AllowOrigins: "http://localhost:3000",
-		AllowHeaders: "Content-Type, Authorization",
+		AllowOrigins: "*",
+		AllowHeaders: "*",
 		AllowMethods: "GET, POST, PUT, DELETE, OPTIONS",
 	})
 }

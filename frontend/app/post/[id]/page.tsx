@@ -8,6 +8,7 @@ import CreatePostModal from "@/app/components/forcommunity/CreatePostModal";
 import CommentReportModal from "@/app/components/CommentReportModal";
 import { ArrowLeft, Heart, Upload, Siren, X, Trash2, Pencil, MoreHorizontal, Bookmark, Info } from "lucide-react";
 import PostReportModal from "@/app/components/PostreportModal";
+import { getImageUrl } from "@/lib/media";
 
 type ImageItem = { url: string; order: number };
 
@@ -48,8 +49,6 @@ function Lightbox({
   onClose: () => void;
 }) {
   const [current, setCurrent] = useState(startIndex);
-  const base = "http://localhost:8080";
-
   return (
     <div
       className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center"
@@ -73,7 +72,7 @@ function Lightbox({
       )}
 
       <img
-        src={`${base}${images[current].url}`}
+        src={getImageUrl(images[current].url)}
         className="max-h-[90vh] max-w-[90vw] object-contain rounded-lg"
         onClick={(e) => e.stopPropagation()}
       />
@@ -114,7 +113,6 @@ function PostImageGrid({
   images: ImageItem[];
   onOpen: (i: number) => void;
 }) {
-  const base = "http://localhost:8080";
   const sorted = [...images].sort((a, b) => a.order - b.order);
 
   if (sorted.length === 0) return null;
@@ -122,7 +120,7 @@ function PostImageGrid({
   if (sorted.length === 1) {
     return (
       <img
-        src={`${base}${sorted[0].url}`}
+        src={getImageUrl(sorted[0].url)}
         className="w-full max-h-80 object-cover cursor-pointer"
         onClick={() => onOpen(0)}
       />
@@ -135,7 +133,7 @@ function PostImageGrid({
         {sorted.map((img, i) => (
           <img
             key={i}
-            src={`${base}${img.url}`}
+            src={getImageUrl(img.url)}
             className="w-full h-52 object-cover cursor-pointer hover:brightness-95 transition-all"
             onClick={() => onOpen(i)}
           />
@@ -148,18 +146,18 @@ function PostImageGrid({
     return (
       <div className="grid grid-cols-2 gap-0.5" style={{ gridTemplateRows: "auto auto" }}>
         <img
-          src={`${base}${sorted[0].url}`}
+          src={getImageUrl(sorted[0].url)}
           className="w-full object-cover cursor-pointer hover:brightness-95 transition-all"
           style={{ gridRow: "span 2", height: "100%" }}
           onClick={() => onOpen(0)}
         />
         <img
-          src={`${base}${sorted[1].url}`}
+          src={getImageUrl(sorted[1].url)}
           className="w-full h-[104px] object-cover cursor-pointer hover:brightness-95 transition-all"
           onClick={() => onOpen(1)}
         />
         <img
-          src={`${base}${sorted[2].url}`}
+          src={getImageUrl(sorted[2].url)}
           className="w-full h-[104px] object-cover cursor-pointer hover:brightness-95 transition-all"
           onClick={() => onOpen(2)}
         />
@@ -176,7 +174,7 @@ function PostImageGrid({
       {shown.map((img, i) => (
         <div key={i} className="relative">
           <img
-            src={`${base}${img.url}`}
+            src={getImageUrl(img.url)}
             className="w-full h-40 object-cover cursor-pointer hover:brightness-95 transition-all"
             onClick={() => onOpen(i)}
           />
@@ -366,7 +364,7 @@ export default function PostDetailPage() {
       });
       if (res.ok) {
         alert("ลบโพสต์เรียบร้อยแล้ว"); // อันนี้ทิ้ง alert ไว้ได้เพราะเรากำลังจะเด้งเปลี่ยนหน้า
-        router.push("/");
+        router.push("/post/feed");
       } else {
         showToast("ลบโพสต์ไม่สำเร็จ");
       }

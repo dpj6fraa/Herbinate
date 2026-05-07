@@ -4,9 +4,9 @@ import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Nav from "../components/Nav";
 import Footer from "../components/Footer";
+import { getImageUrl } from "@/lib/media";
 
 const API = process.env.NEXT_PUBLIC_API_URL;
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL;
 
 type Article = {
   id: string;
@@ -22,7 +22,7 @@ function ArticleCards({ data }: { data: Article[] }) {
   return (
     <>
       {data?.map((item) => {
-        const imgSource = item.image_url ? `${BASE_URL}${item.image_url}` : "/placeholder.png";
+        const imgSource = getImageUrl(item.image_url);
 
         return (
           <div
@@ -81,7 +81,7 @@ export default function ArticlesPage() {
   const router = useRouter();
 
   useEffect(() => {
-    fetch(`${API}/articles`)
+    fetch(`${API}/api/articles`)
       .then((res) => res.json())
       .then((data) => {
         setArticles(data);

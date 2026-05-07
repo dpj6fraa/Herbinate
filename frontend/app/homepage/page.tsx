@@ -7,9 +7,9 @@ import { useRouter } from "next/navigation";
 import { Menu } from "lucide-react";
 import Nav from "../components/Nav";
 import Footer from "../components/Footer";
+import { getImageUrl } from "@/lib/media";
 
-const API = process.env.NEXT_PUBLIC_API_URL;
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL;
+const API = process.env.NEXT_PUBLIC_BASE_URL;
 
 // ==========================================
 // 1. Interfaces
@@ -122,10 +122,11 @@ function SearchBar() {
       <div className="relative w-full h-64 sm:h-75 md:h-60">
         <div className="absolute inset-0 z-0 overflow-hidden bg-black">
           <Image
-            src="/images/herbs.webp"
+            src="https://pub-82deaf1f567947a88284a7d53b868b9d.r2.dev/Fresh-Herbs_HERO_040424_3581-1024x576.jpg"
             alt="Herbinate Background"
             fill
             className="object-cover opacity-60"
+            unoptimized
           />
         </div>
 
@@ -333,7 +334,7 @@ function Tools() {
                 <h3 className="text-xs text-gray-800 font-medium">Compare</h3>
               </div>
               <p className="text-[10px] text-gray-600 mt-1.5">เปรียบเทียบสรรพคุณ</p>
-             </Link>
+            </Link>
           </div>
         </div>
       </div>
@@ -374,7 +375,7 @@ function PopularHerbs({ data }: { data: Herb[] }) {
           <div className="overflow-x-auto scrollbar-hide snap-x snap-mandatory px-4">
             <div className="flex gap-4" style={{ width: "max-content" }}>
               {data?.map((item) => {
-                const imgSource = item.image_url ? `${BASE_URL}${item.image_url}` : "/placeholder.png";
+                const imgSource = getImageUrl(item.image_url);
 
                 return (
                   <div
@@ -443,7 +444,7 @@ function HerbsNews({ data }: { data: Article[] }) {
           <div className="overflow-x-auto scrollbar-hide snap-x snap-mandatory px-4">
             <div className="flex gap-4" style={{ width: "max-content" }}>
               {data?.map((item) => {
-                const imgSource = item.image_url ? `${BASE_URL}${item.image_url}` : "/placeholder.png";
+                const imgSource = getImageUrl(item.image_url);
 
                 return (
                   <div

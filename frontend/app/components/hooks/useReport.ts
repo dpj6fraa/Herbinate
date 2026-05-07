@@ -2,7 +2,10 @@
 // Hook กลางสำหรับส่ง Report ทุกประเภท
 // ใช้ร่วมกันได้ทั้ง HerbReportModal, ArticleReportModal, CommunityReportModal
 
-const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+const API = API_BASE.endsWith("/api")
+  ? API_BASE
+  : `${API_BASE.replace(/\/$/, "")}/api`;
 
 export type TargetType = "herb" | "article" | "community" | "comment";
 

@@ -302,6 +302,76 @@ func GetReportByID(c *fiber.Ctx) error {
 	return c.JSON(report)
 }
 
+func DeleteReport(c *fiber.Ctx) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	objID, err := primitive.ObjectIDFromHex(c.Params("id"))
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid report ID"})
+	}
+
+	collection := database.GetCollection(reportCollection)
+	result, err := collection.DeleteOne(ctx, bson.M{"_id": objID})
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+	if result.DeletedCount == 0 {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Report not found"})
+	}
+
+	return c.JSON(fiber.Map{"message": "Report deleted"})
+}
+
+func DeleteReportedTarget(c *fiber.Ctx) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	reportID, err := primitive.ObjectIDFromHex(c.Params("id"))
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid report ID"})
+	}
+
+	reports := database.GetCollection(reportCollection)
+	var report models.Report
+	if err := reports.FindOne(ctx, bson.M{"_id": reportID}).Decode(&report); err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Report not found"})
+	}
+
+	targetID, err := primitive.ObjectIDFromHex(report.TargetID)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid target ID"})
+	}
+
+	var targetCollection string
+	switch report.TargetType {
+	case models.TargetCommunity:
+		targetCollection = "posts"
+	case "comment":
+		targetCollection = "post_comments"
+	default:
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "This report target cannot be deleted here"})
+	}
+
+	result, err := database.GetCollection(targetCollection).DeleteOne(ctx, bson.M{"_id": targetID})
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+	if result.DeletedCount == 0 {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Target not found"})
+	}
+
+	if _, err := reports.UpdateOne(ctx, bson.M{"_id": reportID}, bson.M{"$set": bson.M{
+		"status":     models.StatusResolved,
+		"admin_note": "เนื้อหาที่ถูกรายงานถูกลบแล้ว",
+		"updated_at": time.Now(),
+	}}); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	return c.JSON(fiber.Map{"message": "Reported target deleted"})
+}
+
 func GetMyReports(c *fiber.Ctx) error {
 	userObjID := middleware.GetUserID(c)
 	if userObjID == primitive.NilObjectID {

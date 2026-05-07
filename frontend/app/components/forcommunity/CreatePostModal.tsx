@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { X, Image as ImageIcon, GripVertical } from "lucide-react";
+import { getImageUrl } from "@/lib/media";
 
 type CreatePostModalProps = {
   modalType: "create" | "edit";
@@ -11,7 +12,7 @@ type CreatePostModalProps = {
   initialTitle?: string;
   initialContent?: string;
   // เพิ่มการรับ initialImages
-  initialImages?: { url: string; order: number }[];
+  initialImages?: { url: string; order: number }[] | null;
   onSuccess?: () => void;
 };
 
@@ -49,13 +50,15 @@ export default function CreatePostModal({
 
   // โหลดรูปภาพเดิมถ้าเป็นโหมด Edit
   useEffect(() => {
-    if (modalType === "edit" && initialImages.length > 0) {
-      const oldMedia = initialImages
+    const safeInitialImages = Array.isArray(initialImages) ? initialImages : [];
+
+    if (modalType === "edit" && safeInitialImages.length > 0) {
+      const oldMedia = safeInitialImages
         .sort((a, b) => a.order - b.order)
         .map((img) => ({
           id: Math.random().toString(36).substring(7),
           isOld: true,
-          url: `${baseApi}${img.url}`,
+          url: getImageUrl(img.url),
           file: null,
           originalUrl: img.url,
         }));
