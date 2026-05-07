@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"mime/multipart"
 	"os"
 	"path/filepath"
 	"time"
@@ -12,6 +13,7 @@ import (
 	"herb-api/internal/middleware"
 	"herb-api/internal/models"
 	"herb-api/internal/repository"
+	"herb-api/internal/service"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
@@ -25,6 +27,42 @@ type PostHandler struct {
 
 func NewPostHandler(repo *repository.PostRepository) *PostHandler {
 	return &PostHandler{Posts: repo}
+}
+
+func savePostImage(fileHeader *multipart.FileHeader) (string, error) {
+	file, err := fileHeader.Open()
+	if err != nil {
+		return "", err
+	}
+	defer file.Close()
+
+	if service.R2Configured() {
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+
+		return service.UploadImageToR2(ctx, file, fileHeader.Filename, fileHeader.Header.Get("Content-Type"), "posts")
+	}
+
+	uploadDir := "./uploads/posts/"
+	if err := os.MkdirAll(uploadDir, os.ModePerm); err != nil {
+		return "", err
+	}
+
+	ext := filepath.Ext(fileHeader.Filename)
+	filename := uuid.NewString() + ext
+	filePath := filepath.Join(uploadDir, filename)
+
+	dst, err := os.Create(filePath)
+	if err != nil {
+		return "", err
+	}
+	defer dst.Close()
+
+	if _, err := io.Copy(dst, file); err != nil {
+		return "", err
+	}
+
+	return "/uploads/posts/" + filename, nil
 }
 
 // Helper function to get user ID from context (assuming you set it in AuthMiddleware)
@@ -53,32 +91,14 @@ func (h *PostHandler) CreatePost(c *fiber.Ctx) error {
 	}
 
 	// 📁 โฟลเดอร์เก็บรูป
-	uploadDir := "./uploads/posts/"
-	os.MkdirAll(uploadDir, os.ModePerm)
-
 	form, err := c.MultipartForm()
 	if err == nil {
 		files := form.File["images"]
 		for i, fileHeader := range files {
-			file, err := fileHeader.Open()
+			imageURL, err := savePostImage(fileHeader)
 			if err != nil {
-				continue
+				return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to upload image"})
 			}
-			defer file.Close()
-
-			ext := filepath.Ext(fileHeader.Filename)
-			filename := uuid.NewString() + ext
-			filePath := uploadDir + filename
-
-			dst, err := os.Create(filePath)
-			if err != nil {
-				continue
-			}
-			defer dst.Close()
-
-			io.Copy(dst, file)
-
-			imageURL := "/uploads/posts/" + filename
 
 			h.Posts.AddImage(post.ID, &models.PostImage{
 				URL:      imageURL,
@@ -370,29 +390,11 @@ func (h *PostHandler) EditPost(c *fiber.Ctx) error {
 
 		// --- เซฟรูปภาพใหม่ที่เพิ่งอัปโหลด ---
 		if newFiles, ok := form.File["new_images"]; ok {
-			uploadDir := "./uploads/posts/"
-			os.MkdirAll(uploadDir, os.ModePerm)
-
 			for _, fileHeader := range newFiles {
-				file, err := fileHeader.Open()
+				imageURL, err := savePostImage(fileHeader)
 				if err != nil {
-					continue
+					return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to upload image"})
 				}
-				defer file.Close()
-
-				ext := filepath.Ext(fileHeader.Filename)
-				filename := uuid.NewString() + ext
-				filePath := uploadDir + filename
-
-				dst, err := os.Create(filePath)
-				if err != nil {
-					continue
-				}
-				defer dst.Close()
-
-				io.Copy(dst, file)
-
-				imageURL := "/uploads/posts/" + filename
 				finalImages = append(finalImages, models.PostImage{
 					ID:       primitive.NewObjectID(),
 					URL:      imageURL,

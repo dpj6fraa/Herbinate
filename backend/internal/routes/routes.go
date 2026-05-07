@@ -106,4 +106,6 @@ func SetupRoutes(app *fiber.App) {
 	admin.Get("/reports", handlers.GetReports)
 	admin.Get("/reports/:id", handlers.GetReportByID)
 	admin.Patch("/reports/:id", handlers.UpdateReportStatus)
+	admin.Delete("/reports/:id/target", handlers.DeleteReportedTarget)
+	admin.Delete("/reports/:id", handlers.DeleteReport)
 }

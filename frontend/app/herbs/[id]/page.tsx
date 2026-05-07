@@ -6,6 +6,7 @@ import Nav from "../../components/Nav";
 import Footer from "../../components/Footer";
 import HerbReportModal from "../../components/HerbReportModal";
 import { Siren } from "lucide-react";
+import { getImageUrl } from "@/lib/media";
 
 const API = "http://localhost:8080";
 
@@ -125,7 +126,7 @@ export default function HerbDetailPage() {
     );
   }
 
-  const imageURL = herb.image_url ? `${API}${herb.image_url}` : null;
+  const imageURL = getImageUrl(herb.image_url, "");
   const sortedSections = [...(herb.sections ?? [])].sort(
     (a, b) => a.position - b.position
   );

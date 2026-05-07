@@ -6,6 +6,7 @@ import Nav from "@/app/components/Nav";
 import Footer from "@/app/components/Footer";
 import CreatePostModal from "../../components/forcommunity/CreatePostModal";
 import PostReportModal from "@/app/components/PostreportModal"; // 🌟 เพิ่ม Modal รายงาน
+import { getImageUrl } from "@/lib/media";
 import {
   Search,
   Filter,
@@ -239,24 +240,22 @@ useEffect(() => {
       : [];
 
     if (sorted.length === 0) return null;
-    const base = "http://localhost:8080";
-
     if (sorted.length === 1) {
-      return <img src={`${base}${sorted[0].url}`} className="w-full max-h-72 object-cover" />;
+      return <img src={getImageUrl(sorted[0].url)} className="w-full max-h-72 object-cover" />;
     }
     if (sorted.length === 2) {
       return (
         <div className="grid grid-cols-2 gap-0.5">
-          {sorted.map((img, i) => <img key={i} src={`${base}${img.url}`} className="w-full h-44 object-cover" />)}
+          {sorted.map((img, i) => <img key={i} src={getImageUrl(img.url)} className="w-full h-44 object-cover" />)}
         </div>
       );
     }
     if (sorted.length === 3) {
       return (
         <div className="grid grid-cols-2 gap-0.5">
-          <img src={`${base}${sorted[0].url}`} className="w-full h-44 object-cover row-span-2 col-span-1" style={{ gridRow: "span 2" }} />
-          <img src={`${base}${sorted[1].url}`} className="w-full h-[86px] object-cover" />
-          <img src={`${base}${sorted[2].url}`} className="w-full h-[86px] object-cover" />
+          <img src={getImageUrl(sorted[0].url)} className="w-full h-44 object-cover row-span-2 col-span-1" style={{ gridRow: "span 2" }} />
+          <img src={getImageUrl(sorted[1].url)} className="w-full h-[86px] object-cover" />
+          <img src={getImageUrl(sorted[2].url)} className="w-full h-[86px] object-cover" />
         </div>
       );
     }
@@ -267,7 +266,7 @@ useEffect(() => {
       <div className="grid grid-cols-2 gap-0.5">
         {shown.map((img, i) => (
           <div key={i} className="relative">
-            <img src={`${base}${img.url}`} className="w-full h-36 object-cover" />
+            <img src={getImageUrl(img.url)} className="w-full h-36 object-cover" />
             {i === 3 && extra > 0 && (
               <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
                 <span className="text-white font-bold text-2xl">+{extra}</span>
